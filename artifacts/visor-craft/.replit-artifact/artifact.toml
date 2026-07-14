@@ -1,0 +1,27 @@
+kind = "web"
+previewPath = "/"
+title = "Visor Craft Pro"
+version = "1.0.0"
+id = "artifacts/visor-craft"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 19313
+
+[services.development]
+run = "pnpm --filter @workspace/visor-craft run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/visor-craft", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/visor-craft/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "19313"
+BASE_PATH = "/"
