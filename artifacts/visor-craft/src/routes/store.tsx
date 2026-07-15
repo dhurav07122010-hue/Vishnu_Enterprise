@@ -100,7 +100,7 @@ function StorePage() {
             <p>No categories configured yet.</p>
           </div>
         ) : (
-          <div className="grid grid-cols-2 gap-4 sm:gap-6">
+          <div className="grid grid-cols-3 gap-3 sm:grid-cols-2 sm:gap-6">
             {mainCategories.map((cat) => {
               const catSubs = allCategories.filter((c) => c.parent_id === cat.id);
               const catSubIds = new Set(catSubs.map((c) => c.id));
