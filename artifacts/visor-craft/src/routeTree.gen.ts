@@ -13,6 +13,7 @@ import { Route as WishlistRouteImport } from './routes/wishlist'
 import { Route as TrackRouteImport } from './routes/track'
 import { Route as StoreRouteImport } from './routes/store'
 import { Route as OrdersRouteImport } from './routes/orders'
+import { Route as OrdersIndexRouteImport } from './routes/orders.index'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as ContactRouteImport } from './routes/contact'
 import { Route as CheckoutRouteImport } from './routes/checkout'
@@ -106,6 +107,12 @@ const PoliciesRefundRoute = PoliciesRefundRouteImport.update({
   path: '/policies/refund',
   getParentRoute: () => rootRouteImport,
 } as any)
+const OrdersIndexRoute = OrdersIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => OrdersRoute,
+} as any)
+
 const OrdersOrderNumberRoute = OrdersOrderNumberRouteImport.update({
   id: '/$orderNumber',
   path: '/$orderNumber',
@@ -158,10 +165,12 @@ const AdminRouteChildren: AdminRouteChildren = {
 const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
 
 interface OrdersRouteChildren {
+  OrdersIndexRoute: typeof OrdersIndexRoute
   OrdersOrderNumberRoute: typeof OrdersOrderNumberRoute
 }
 
 const OrdersRouteChildren: OrdersRouteChildren = {
+  OrdersIndexRoute: OrdersIndexRoute,
   OrdersOrderNumberRoute: OrdersOrderNumberRoute,
 }
 
@@ -230,6 +239,7 @@ export interface FileRoutesByFullPath {
   '/policies/replacement': typeof PoliciesReplacementRoute
   '/products/$slug': typeof ProductsSlugRoute
   '/admin/': typeof AdminIndexRoute
+  '/orders/': typeof OrdersIndexRoute
   '/orders/$orderNumber': typeof OrdersOrderNumberRoute
   '/admin/messages': typeof AdminMessagesRoute
   '/admin/newsletter': typeof AdminNewsletterRoute
@@ -254,6 +264,7 @@ export interface FileRoutesByTo {
   '/policies/replacement': typeof PoliciesReplacementRoute
   '/products/$slug': typeof ProductsSlugRoute
   '/admin/': typeof AdminIndexRoute
+  '/orders/': typeof OrdersIndexRoute
   '/orders/$orderNumber': typeof OrdersOrderNumberRoute
   '/admin/messages': typeof AdminMessagesRoute
   '/admin/newsletter': typeof AdminNewsletterRoute
@@ -278,6 +289,7 @@ export type FullPaths =
   | '/policies/replacement'
   | '/products/$slug'
   | '/admin/'
+  | '/orders/'
   | '/orders/$orderNumber'
   | '/admin/messages'
   | '/admin/newsletter'
@@ -301,6 +313,7 @@ export type To =
   | '/policies/replacement'
   | '/products/$slug'
   | '/admin/'
+  | '/orders/'
   | '/orders/$orderNumber'
   | '/admin/messages'
   | '/admin/newsletter'
@@ -325,6 +338,7 @@ export type Id =
   | '/policies/replacement'
   | '/products/$slug'
   | '/admin/'
+  | '/orders/'
   | '/orders/$orderNumber'
   | '/admin/messages'
   | '/admin/newsletter'
@@ -349,6 +363,7 @@ export interface FileRoutesById {
   '/policies/replacement': typeof PoliciesReplacementRoute
   '/products/$slug': typeof ProductsSlugRoute
   '/admin/': typeof AdminIndexRoute
+  '/orders/': typeof OrdersIndexRoute
   '/orders/$orderNumber': typeof OrdersOrderNumberRoute
   '/admin/messages': typeof AdminMessagesRoute
   '/admin/newsletter': typeof AdminNewsletterRoute
