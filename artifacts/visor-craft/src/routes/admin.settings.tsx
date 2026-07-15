@@ -1,4 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useRef, useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -6,11 +8,89 @@ import { useRequireAdmin } from "@/lib/require-auth";
 import { adminLogout } from "@/lib/admin-auth";
 import { useNavigate } from "@tanstack/react-router";
 import { SITE } from "@/lib/site";
-import { MapPin, Phone, Mail, Clock, CreditCard, LogOut, Shield, Store } from "lucide-react";
+import { siteSettingsQuery, uploadSiteLogo, saveSiteLogoUrl } from "@/lib/site-settings";
+import { toast } from "sonner";
+import { MapPin, Phone, Mail, Clock, CreditCard, LogOut, Shield, Store, ImagePlus, X } from "lucide-react";
 
 export const Route = createFileRoute("/admin/settings")({
   component: AdminSettings,
 });
+
+function LogoSettingsCard() {
+  const queryClient = useQueryClient();
+  const { data: siteSettings } = useQuery(siteSettingsQuery());
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  async function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploading(true);
+    try {
+      const url = await uploadSiteLogo(file);
+      await saveSiteLogoUrl(url);
+      await queryClient.invalidateQueries({ queryKey: ["site-settings"] });
+      toast.success("Logo updated");
+    } catch (err: any) {
+      toast.error(err.message ?? "Logo upload failed");
+    } finally {
+      setUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  }
+
+  async function handleRemove() {
+    try {
+      await saveSiteLogoUrl(null);
+      await queryClient.invalidateQueries({ queryKey: ["site-settings"] });
+      toast.success("Logo removed");
+    } catch (err: any) {
+      toast.error(err.message ?? "Failed to remove logo");
+    }
+  }
+
+  const logoUrl = siteSettings?.logo_url ?? null;
+
+  return (
+    <Card>
+      <CardHeader className="pb-3">
+        <CardTitle className="flex items-center gap-2 text-base"><ImagePlus className="h-4 w-4 text-primary" /> Store Logo</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-3 text-sm">
+        <p className="text-xs text-muted-foreground">Shown centered in the site header. Recommended: a wide rectangle, transparent background.</p>
+        <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleFileChange} />
+        {logoUrl ? (
+          <div className="relative group flex items-center justify-center rounded-xl border bg-muted/40 p-4">
+            <img src={logoUrl} alt="Store logo" className="h-16 max-w-[240px] object-contain" />
+            <div className="absolute inset-0 flex items-center justify-center gap-2 rounded-xl bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity">
+              <Button size="sm" variant="secondary" type="button" onClick={() => fileInputRef.current?.click()}>
+                Change
+              </Button>
+              <Button size="sm" variant="destructive" type="button" onClick={handleRemove}>
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+        ) : (
+          <button
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
+            className="w-full h-24 flex flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-input hover:border-primary/50 hover:bg-primary/5 transition-colors cursor-pointer"
+          >
+            <ImagePlus className="h-6 w-6 text-muted-foreground" />
+            <span className="text-sm text-muted-foreground">Click to upload logo</span>
+          </button>
+        )}
+        {uploading && (
+          <p className="text-xs text-muted-foreground flex items-center gap-1.5">
+            <span className="h-3 w-3 animate-spin rounded-full border border-primary border-t-transparent" />
+            Uploading…
+          </p>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
 
 function AdminSettings() {
   const ready = useRequireAdmin();
@@ -29,6 +109,8 @@ function AdminSettings() {
         <h1 className="font-display text-3xl font-bold">Settings</h1>
         <p className="text-muted-foreground mt-1 text-sm">Store configuration overview</p>
       </div>
+
+      <LogoSettingsCard />
 
       {/* Store info */}
       <Card>

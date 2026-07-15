@@ -1,6 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { Menu, ShoppingBag, X, Heart, LogOut, Moon, Sun, User } from "lucide-react";
 import { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { useTheme } from "next-themes";
 import { Button } from "@/components/ui/button";
 import { SITE } from "@/lib/site";
@@ -8,6 +9,7 @@ import { cn } from "@/lib/utils";
 import { useCartCount } from "@/lib/cart";
 import { useWishlistCount } from "@/lib/wishlist";
 import { useAuth } from "@/lib/auth";
+import { siteSettingsQuery } from "@/lib/site-settings";
 
 const links = [
   { to: "/", label: "Home" },
@@ -76,6 +78,8 @@ export function Navbar() {
   const cartCount = useCartCount();
   const wishlistCount = useWishlistCount();
   const { user, signOut } = useAuth();
+  const { data: siteSettings } = useQuery(siteSettingsQuery());
+  const logoUrl = siteSettings?.logo_url ?? null;
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 12);
@@ -96,14 +100,28 @@ export function Navbar() {
         scrolled && "shadow-md",
       )}
     >
-      <div className="container-page flex h-16 items-center gap-6">
-        <Link to="/" className="flex shrink-0 items-center" aria-label={SITE.name}>
-          <span className="grid h-9 w-9 place-items-center rounded-xl bg-primary-gradient text-primary-foreground shadow-elegant">
-            <span className="text-sm font-bold">VE</span>
-          </span>
+      <div className="container-page flex h-16 items-center gap-4">
+        {/* Menu toggle */}
+        <Button
+          variant="ghost"
+          size="icon"
+          className="shrink-0"
+          onClick={() => setOpen((v) => !v)}
+          aria-label={open ? "Close menu" : "Open menu"}
+        >
+          {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+        </Button>
+
+        {/* Logo — set from Admin → Settings */}
+        <Link to="/" className="flex flex-1 items-center justify-center" aria-label={SITE.name}>
+          {logoUrl ? (
+            <img src={logoUrl} alt={SITE.name} className="h-10 max-w-[180px] object-contain" />
+          ) : (
+            <span className="h-10 w-40 rounded-lg border border-dashed border-border/70" aria-hidden="true" />
+          )}
         </Link>
 
-        <div className="ml-auto flex items-center gap-1">
+        <div className="flex items-center gap-1">
           {user && (
             <Button asChild variant="ghost" className="hidden sm:inline-flex">
               <Link to="/orders">My Orders</Link>
@@ -168,16 +186,6 @@ export function Navbar() {
 
           <Button asChild className="hidden lg:inline-flex">
             <Link to="/store">Shop Now</Link>
-          </Button>
-
-          {/* Menu toggle */}
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => setOpen((v) => !v)}
-            aria-label={open ? "Close menu" : "Open menu"}
-          >
-            {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
           </Button>
         </div>
       </div>

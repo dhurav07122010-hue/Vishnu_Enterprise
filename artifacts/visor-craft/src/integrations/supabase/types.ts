@@ -444,6 +444,24 @@ export type Database = {
         }
         Relationships: []
       }
+      site_settings: {
+        Row: {
+          id: string
+          logo_url: string | null
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          logo_url?: string | null
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          logo_url?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

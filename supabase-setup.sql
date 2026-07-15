@@ -322,3 +322,23 @@ INSERT INTO categories (name, slug, description, sort_order) VALUES
   ('Clear',    'clear',    'Crystal-clear visors for all conditions',  3),
   ('Coloured', 'coloured', 'Bold coloured visors',                    4)
 ON CONFLICT (slug) DO NOTHING;
+
+-- ── 9. SITE SETTINGS (single-row store settings, e.g. logo) ─
+CREATE TABLE IF NOT EXISTS site_settings (
+  id          text    PRIMARY KEY DEFAULT 'default',
+  logo_url    text,
+  updated_at  timestamptz NOT NULL DEFAULT now()
+);
+
+ALTER TABLE site_settings ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "site_settings_public_read" ON site_settings;
+CREATE POLICY "site_settings_public_read" ON site_settings
+  FOR SELECT USING (true);
+
+DROP POLICY IF EXISTS "site_settings_anon_write" ON site_settings;
+CREATE POLICY "site_settings_anon_write" ON site_settings
+  FOR ALL USING (true) WITH CHECK (true);
+
+INSERT INTO site_settings (id) VALUES ('default')
+ON CONFLICT (id) DO NOTHING;
