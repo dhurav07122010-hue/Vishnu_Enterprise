@@ -10,6 +10,7 @@ import { useCartCount } from "@/lib/cart";
 import { useWishlistCount } from "@/lib/wishlist";
 import { useAuth } from "@/lib/auth";
 import { siteSettingsQuery } from "@/lib/site-settings";
+import { allCategoriesQuery } from "@/lib/products";
 
 const links = [
   { to: "/", label: "Home" },
@@ -80,6 +81,8 @@ export function Navbar() {
   const { user, signOut } = useAuth();
   const { data: siteSettings } = useQuery(siteSettingsQuery());
   const logoUrl = siteSettings?.logo_url ?? null;
+  const { data: allCategories } = useQuery(allCategoriesQuery());
+  const mainCategories = (allCategories ?? []).filter((c) => !c.parent_id && c.is_visible !== false);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 12);
@@ -205,16 +208,32 @@ export function Navbar() {
           )}
 
           {links.map((l) => (
-            <Link
-              key={l.to}
-              to={l.to}
-              onClick={() => setOpen(false)}
-              className="rounded-lg px-3 py-3 text-sm font-medium text-foreground transition-colors hover:bg-accent"
-              activeProps={{ className: "text-primary bg-accent" }}
-              activeOptions={{ exact: l.to === "/" }}
-            >
-              {l.label}
-            </Link>
+            <div key={l.to}>
+              <Link
+                to={l.to}
+                onClick={() => setOpen(false)}
+                className="rounded-lg px-3 py-3 text-sm font-medium text-foreground transition-colors hover:bg-accent"
+                activeProps={{ className: "text-primary bg-accent" }}
+                activeOptions={{ exact: l.to === "/" }}
+              >
+                {l.label}
+              </Link>
+              {l.to === "/store" && mainCategories.length > 0 && (
+                <div className="grid grid-cols-2 gap-2 px-3 pb-3 pt-1">
+                  {mainCategories.map((cat) => (
+                    <Link
+                      key={cat.id}
+                      to="/store"
+                      search={{ main: cat.id, sub: undefined }}
+                      onClick={() => setOpen(false)}
+                      className="truncate rounded-lg border border-border/60 px-3 py-2 text-center text-xs font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+                    >
+                      {cat.name}
+                    </Link>
+                  ))}
+                </div>
+              )}
+            </div>
           ))}
           {user && (
             <Link

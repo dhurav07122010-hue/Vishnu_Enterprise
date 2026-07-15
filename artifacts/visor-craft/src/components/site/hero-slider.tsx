@@ -151,62 +151,32 @@ function DynamicSlider({ slides }: { slides: SliderItem[] }) {
 }
 
 function Slide({ slide }: { slide: SliderItem }) {
-  const hasImage = !!slide.image_url;
+  const image = slide.image_url || heroImage;
+
+  const content = (
+    <img
+      src={image}
+      alt={slide.title}
+      className="h-[260px] w-full object-cover sm:h-[380px] md:h-[480px] lg:h-[560px]"
+      loading="lazy"
+    />
+  );
 
   return (
     <div className="min-w-0 flex-[0_0_100%]">
-      <div className="container-page grid gap-10 py-16 md:grid-cols-2 md:items-center md:py-24">
-        <div className="space-y-6">
-          {slide.subtitle && (
-            <span className="inline-flex items-center gap-2 rounded-full border border-navy-foreground/20 bg-navy-foreground/5 px-3 py-1 text-xs font-medium uppercase tracking-widest text-navy-foreground/80">
-              <Sparkles className="h-3.5 w-3.5" /> {slide.subtitle}
-            </span>
-          )}
-          <h1 className="font-display text-4xl font-extrabold leading-[1.05] sm:text-5xl md:text-6xl">
-            <span className="bg-gradient-to-r from-primary-glow to-white bg-clip-text text-transparent">
-              {slide.title}
-            </span>
-          </h1>
-          {slide.description && (
-            <p className="max-w-lg text-base text-navy-foreground/75 sm:text-lg">
-              {slide.description}
-            </p>
-          )}
-          {slide.button_text && (
-            <div className="flex flex-wrap gap-3">
-              {slide.button_link?.startsWith("http") ? (
-                <a href={slide.button_link} className="inline-flex items-center gap-2 rounded-md bg-white px-5 py-2.5 text-sm font-semibold text-navy shadow-elegant transition hover:bg-white/90">
-                  {slide.button_text} <ArrowRight className="h-4 w-4" />
-                </a>
-              ) : (
-                <Button asChild size="lg" className="shadow-elegant bg-white text-navy hover:bg-white/90">
-                  <Link to={(slide.button_link as any) ?? "/store"}>
-                    {slide.button_text} <ArrowRight className="h-4 w-4" />
-                  </Link>
-                </Button>
-              )}
-            </div>
-          )}
-        </div>
-        <div className="relative">
-          <div className="absolute -inset-8 rounded-full bg-primary/30 blur-3xl" aria-hidden />
-          {hasImage ? (
-            <img
-              src={slide.image_url}
-              alt={slide.title}
-              className="relative w-full rounded-3xl shadow-elegant object-cover max-h-[480px]"
-              loading="lazy"
-            />
-          ) : (
-            <img
-              src={heroImage}
-              alt={slide.title}
-              className="relative w-full rounded-3xl shadow-elegant"
-              loading="lazy"
-            />
-          )}
-        </div>
-      </div>
+      {slide.button_link ? (
+        slide.button_link.startsWith("http") ? (
+          <a href={slide.button_link} className="block">
+            {content}
+          </a>
+        ) : (
+          <Link to={slide.button_link as any} className="block">
+            {content}
+          </Link>
+        )
+      ) : (
+        content
+      )}
     </div>
   );
 }
