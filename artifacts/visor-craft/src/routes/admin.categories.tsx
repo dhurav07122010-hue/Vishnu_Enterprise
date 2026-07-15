@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -11,14 +11,25 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { useRequireAdmin } from "@/lib/require-auth";
 import { toast } from "sonner";
-import { Plus, Pencil, Trash2, ChevronUp, ChevronDown, Loader2, Tag } from "lucide-react";
+import { Plus, Pencil, Trash2, ChevronUp, ChevronDown, Loader2, Layers, ImagePlus, X } from "lucide-react";
 
 export const Route = createFileRoute("/admin/categories")({
-  component: AdminCategories,
+  component: AdminMainCategories,
 });
 
 function slugify(str: string) {
   return str.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+}
+
+async function uploadCategoryImage(file: File): Promise<string> {
+  const ext = file.name.split(".").pop()?.toLowerCase() ?? "jpg";
+  const path = `categories/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+  const { data, error } = await supabase.storage
+    .from("product-images")
+    .upload(path, file, { cacheControl: "31536000", contentType: file.type });
+  if (error) throw new Error(error.message ?? "Image upload failed");
+  const { data: urlData } = supabase.storage.from("product-images").getPublicUrl(data.path);
+  return urlData.publicUrl;
 }
 
 const defaultForm = {
@@ -30,9 +41,10 @@ const defaultForm = {
 };
 type CatForm = typeof defaultForm;
 
-function AdminCategories() {
+function AdminMainCategories() {
   const ready = useRequireAdmin();
   const [categories, setCategories] = useState<any[]>([]);
+  const [subcategoryCounts, setSubcategoryCounts] = useState<Record<string, number>>({});
   const [productCounts, setProductCounts] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
 
@@ -40,32 +52,58 @@ function AdminCategories() {
   const [editCat, setEditCat] = useState<any | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<any | null>(null);
   const [deleteBlocked, setDeleteBlocked] = useState(false);
+  const [deleteBlockedReason, setDeleteBlockedReason] = useState("");
 
   const [form, setForm] = useState<CatForm>(defaultForm);
   const [slugManual, setSlugManual] = useState(false);
   const [saving, setSaving] = useState(false);
 
+  // Image upload
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [localPreview, setLocalPreview] = useState("");
+  const [existingImageUrl, setExistingImageUrl] = useState("");
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   useEffect(() => { if (ready) loadAll(); }, [ready]);
 
   async function loadAll() {
     setLoading(true);
-    const [{ data: cats }, { data: prods }] = await Promise.all([
+    const [{ data: allCats }, { data: prods }] = await Promise.all([
       supabase.from("categories").select("*").order("sort_order", { ascending: true }),
       supabase.from("products").select("category_id"),
     ]);
-    setCategories(cats ?? []);
-    // Count products per category
-    const counts: Record<string, number> = {};
-    (prods ?? []).forEach((p: any) => {
-      if (p.category_id) counts[p.category_id] = (counts[p.category_id] ?? 0) + 1;
+    const all = allCats ?? [];
+    const main = all.filter((c: any) => !c.parent_id);
+    const subs = all.filter((c: any) => !!c.parent_id);
+
+    setCategories(main);
+
+    // subcategory counts per main
+    const subCounts: Record<string, number> = {};
+    subs.forEach((s: any) => {
+      if (s.parent_id) subCounts[s.parent_id] = (subCounts[s.parent_id] ?? 0) + 1;
     });
-    setProductCounts(counts);
+    setSubcategoryCounts(subCounts);
+
+    // product counts per main (via subcategories)
+    const subIdToMain: Record<string, string> = {};
+    subs.forEach((s: any) => { if (s.parent_id) subIdToMain[s.id] = s.parent_id; });
+    const pCounts: Record<string, number> = {};
+    (prods ?? []).forEach((p: any) => {
+      const mainId = subIdToMain[p.category_id];
+      if (mainId) pCounts[mainId] = (pCounts[mainId] ?? 0) + 1;
+    });
+    setProductCounts(pCounts);
     setLoading(false);
   }
 
   function resetDialog() {
     setForm(defaultForm);
     setSlugManual(false);
+    setImageFile(null);
+    setLocalPreview("");
+    setExistingImageUrl("");
   }
 
   function openAdd() {
@@ -84,6 +122,9 @@ function AdminCategories() {
       sort_order: String(c.sort_order ?? 0),
       is_visible: c.is_visible !== false,
     });
+    setExistingImageUrl(c.image_url ?? "");
+    setImageFile(null);
+    setLocalPreview("");
     setDialogOpen(true);
   }
 
@@ -95,10 +136,42 @@ function AdminCategories() {
     });
   }
 
+  function handleImageChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setImageFile(file);
+    const reader = new FileReader();
+    reader.onload = () => setLocalPreview(reader.result as string);
+    reader.readAsDataURL(file);
+  }
+
+  function removeImage() {
+    setImageFile(null);
+    setLocalPreview("");
+    setExistingImageUrl("");
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  }
+
+  const previewSrc = localPreview || existingImageUrl;
+
   async function handleSave() {
     if (!form.name.trim()) { toast.error("Category name is required"); return; }
     if (!form.slug.trim()) { toast.error("Slug is required"); return; }
     setSaving(true);
+
+    let imageUrl = existingImageUrl || null;
+    if (imageFile) {
+      setUploading(true);
+      try {
+        imageUrl = await uploadCategoryImage(imageFile);
+      } catch (err: any) {
+        toast.error(`Image upload failed: ${err.message}`);
+        setSaving(false);
+        setUploading(false);
+        return;
+      }
+      setUploading(false);
+    }
 
     const payload: Record<string, any> = {
       name: form.name.trim(),
@@ -106,6 +179,8 @@ function AdminCategories() {
       description: form.description.trim() || null,
       sort_order: parseInt(form.sort_order) || 0,
       is_visible: form.is_visible,
+      image_url: imageUrl,
+      parent_id: null, // always null for main categories
       updated_at: new Date().toISOString(),
     };
 
@@ -119,7 +194,7 @@ function AdminCategories() {
         const { data, error } = await supabase.from("categories").insert(payload).select().single();
         if (error) throw error;
         setCategories((prev) => [...prev, data].sort((a, b) => a.sort_order - b.sort_order));
-        toast.success("Category created");
+        toast.success("Main category created");
       }
       setDialogOpen(false);
     } catch (err: any) {
@@ -130,11 +205,14 @@ function AdminCategories() {
   }
 
   async function handleDelete(cat: any) {
-    const count = productCounts[cat.id] ?? 0;
-    if (count > 0) {
+    const subCount = subcategoryCounts[cat.id] ?? 0;
+    const prodCount = productCounts[cat.id] ?? 0;
+    if (subCount > 0) {
       setDeleteBlocked(true);
+      setDeleteBlockedReason(`"${cat.name}" has ${subCount} subcategory(ies) with ${prodCount} product(s). Delete or reassign them first.`);
     } else {
       setDeleteBlocked(false);
+      setDeleteBlockedReason("");
     }
     setDeleteTarget(cat);
   }
@@ -153,18 +231,15 @@ function AdminCategories() {
     const idx = categories.findIndex((c) => c.id === id);
     const swapIdx = dir === "up" ? idx - 1 : idx + 1;
     if (swapIdx < 0 || swapIdx >= categories.length) return;
-
     const updated = [...categories];
     const aOrder = updated[idx].sort_order;
     const bOrder = updated[swapIdx].sort_order;
     const newA = bOrder !== aOrder ? bOrder : dir === "up" ? aOrder - 1 : aOrder + 1;
     const newB = aOrder;
-
     await Promise.all([
       supabase.from("categories").update({ sort_order: newA }).eq("id", updated[idx].id),
       supabase.from("categories").update({ sort_order: newB }).eq("id", updated[swapIdx].id),
     ]);
-
     updated[idx] = { ...updated[idx], sort_order: newA };
     updated[swapIdx] = { ...updated[swapIdx], sort_order: newB };
     setCategories(updated.sort((a, b) => a.sort_order - b.sort_order));
@@ -180,18 +255,18 @@ function AdminCategories() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
-          <h1 className="font-display text-3xl font-bold">Product Categories</h1>
-          <p className="text-muted-foreground text-sm mt-0.5">{categories.length} categories · shown in store navigation</p>
+          <h1 className="font-display text-3xl font-bold">Main Categories</h1>
+          <p className="text-muted-foreground text-sm mt-0.5">
+            {categories.length} main {categories.length === 1 ? "category" : "categories"} · shown on the store landing page
+          </p>
         </div>
         <Button onClick={openAdd} className="shadow-elegant">
-          <Plus className="mr-2 h-4 w-4" /> Add Category
+          <Plus className="mr-2 h-4 w-4" /> Add Main Category
         </Button>
       </div>
 
-      {/* Category list */}
       {loading ? (
         <div className="flex items-center justify-center py-20 text-muted-foreground">
           <div className="h-7 w-7 animate-spin rounded-full border-2 border-primary border-t-transparent mr-3" />
@@ -199,8 +274,9 @@ function AdminCategories() {
         </div>
       ) : categories.length === 0 ? (
         <div className="flex flex-col items-center justify-center rounded-2xl border-2 border-dashed py-20">
-          <Tag className="h-12 w-12 text-muted-foreground/30 mb-4" />
-          <p className="font-medium text-muted-foreground">No categories yet</p>
+          <Layers className="h-12 w-12 text-muted-foreground/30 mb-4" />
+          <p className="font-medium text-muted-foreground">No main categories yet</p>
+          <p className="text-sm text-muted-foreground mt-1">Main categories appear as large image cards on the Store page</p>
           <Button onClick={openAdd} variant="outline" className="mt-4">
             <Plus className="mr-2 h-4 w-4" /> Add first category
           </Button>
@@ -211,8 +287,8 @@ function AdminCategories() {
             <thead className="border-b bg-muted/40">
               <tr>
                 <th className="px-4 py-3 text-left font-medium text-muted-foreground">Category</th>
-                <th className="px-4 py-3 text-left font-medium text-muted-foreground hidden sm:table-cell">Slug</th>
-                <th className="px-4 py-3 text-center font-medium text-muted-foreground">Products</th>
+                <th className="px-4 py-3 text-center font-medium text-muted-foreground hidden sm:table-cell">Subcategories</th>
+                <th className="px-4 py-3 text-center font-medium text-muted-foreground hidden md:table-cell">Products</th>
                 <th className="px-4 py-3 text-center font-medium text-muted-foreground">Order</th>
                 <th className="px-4 py-3 text-center font-medium text-muted-foreground">Visible</th>
                 <th className="px-4 py-3 text-right font-medium text-muted-foreground">Actions</th>
@@ -222,20 +298,27 @@ function AdminCategories() {
               {categories.map((cat, idx) => (
                 <tr key={cat.id} className="hover:bg-muted/20 transition-colors">
                   <td className="px-4 py-3">
-                    <div className="flex items-center gap-2">
-                      <div className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-primary/10">
-                        <Tag className="h-4 w-4 text-primary" />
+                    <div className="flex items-center gap-3">
+                      <div className="h-10 w-10 shrink-0 rounded-lg overflow-hidden bg-primary/10">
+                        {cat.image_url ? (
+                          <img src={cat.image_url} alt={cat.name} className="h-full w-full object-cover" />
+                        ) : (
+                          <div className="h-full w-full flex items-center justify-center">
+                            <Layers className="h-4 w-4 text-primary" />
+                          </div>
+                        )}
                       </div>
                       <div>
                         <p className="font-medium">{cat.name}</p>
-                        {cat.description && <p className="text-xs text-muted-foreground">{cat.description}</p>}
+                        {cat.description && <p className="text-xs text-muted-foreground line-clamp-1">{cat.description}</p>}
+                        <p className="text-xs font-mono text-muted-foreground">{cat.slug}</p>
                       </div>
                     </div>
                   </td>
-                  <td className="px-4 py-3 hidden sm:table-cell">
-                    <span className="font-mono text-xs text-muted-foreground">{cat.slug}</span>
+                  <td className="px-4 py-3 text-center hidden sm:table-cell">
+                    <Badge variant="outline">{subcategoryCounts[cat.id] ?? 0}</Badge>
                   </td>
-                  <td className="px-4 py-3 text-center">
+                  <td className="px-4 py-3 text-center hidden md:table-cell">
                     <Badge variant="secondary">{productCounts[cat.id] ?? 0}</Badge>
                   </td>
                   <td className="px-4 py-3">
@@ -244,7 +327,6 @@ function AdminCategories() {
                         onClick={() => moveCategory(cat.id, "up")}
                         disabled={idx === 0}
                         className="grid h-7 w-7 place-items-center rounded-md border bg-background text-muted-foreground hover:text-foreground disabled:opacity-30 disabled:cursor-not-allowed transition"
-                        aria-label="Move up"
                       >
                         <ChevronUp className="h-4 w-4" />
                       </button>
@@ -252,7 +334,6 @@ function AdminCategories() {
                         onClick={() => moveCategory(cat.id, "down")}
                         disabled={idx === categories.length - 1}
                         className="grid h-7 w-7 place-items-center rounded-md border bg-background text-muted-foreground hover:text-foreground disabled:opacity-30 disabled:cursor-not-allowed transition"
-                        aria-label="Move down"
                       >
                         <ChevronDown className="h-4 w-4" />
                       </button>
@@ -284,14 +365,48 @@ function AdminCategories() {
 
       {/* Add / Edit Dialog */}
       <Dialog open={dialogOpen} onOpenChange={(o) => { if (!o) resetDialog(); setDialogOpen(o); }}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="font-display text-xl">
-              {editCat ? "Edit Category" : "Add Category"}
+              {editCat ? "Edit Main Category" : "Add Main Category"}
             </DialogTitle>
           </DialogHeader>
 
           <div className="space-y-4 py-2">
+            {/* Image upload */}
+            <div className="space-y-1.5">
+              <Label>Category Image <span className="text-xs text-muted-foreground font-normal">(shown on store page)</span></Label>
+              <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleImageChange} />
+              {previewSrc ? (
+                <div className="relative group rounded-xl overflow-hidden border bg-muted">
+                  <img src={previewSrc} alt="Preview" className="w-full h-40 object-cover" />
+                  <div className="absolute inset-0 flex items-center justify-center gap-2 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <Button size="sm" variant="secondary" type="button" onClick={() => fileInputRef.current?.click()}>
+                      Change
+                    </Button>
+                    <Button size="sm" variant="destructive" type="button" onClick={removeImage}>
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="w-full h-32 flex flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-input hover:border-primary/50 hover:bg-primary/5 transition-colors cursor-pointer"
+                >
+                  <ImagePlus className="h-6 w-6 text-muted-foreground" />
+                  <span className="text-sm text-muted-foreground">Click to upload image</span>
+                </button>
+              )}
+              {uploading && (
+                <p className="text-xs text-muted-foreground flex items-center gap-1.5">
+                  <span className="h-3 w-3 animate-spin rounded-full border border-primary border-t-transparent" />
+                  Uploading…
+                </p>
+              )}
+            </div>
+
             <div className="space-y-1.5">
               <Label>Name <span className="text-destructive">*</span></Label>
               <Input
@@ -317,7 +432,7 @@ function AdminCategories() {
               <Input
                 value={form.description}
                 onChange={(e) => setField("description", e.target.value)}
-                placeholder="Short description shown in the store"
+                placeholder="Shown on the store page card"
               />
             </div>
 
@@ -340,7 +455,7 @@ function AdminCategories() {
           <DialogFooter className="gap-2">
             <Button variant="ghost" onClick={() => setDialogOpen(false)} disabled={saving}>Cancel</Button>
             <Button onClick={handleSave} disabled={saving} className="min-w-28">
-              {saving ? <><Loader2 className="h-4 w-4 animate-spin mr-2" />Saving…</> : editCat ? "Save Changes" : "Create Category"}
+              {saving ? <><Loader2 className="h-4 w-4 animate-spin mr-2" />{uploading ? "Uploading…" : "Saving…"}</> : editCat ? "Save Changes" : "Create Category"}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -349,12 +464,9 @@ function AdminCategories() {
       {/* Delete dialog */}
       <Dialog open={!!deleteTarget} onOpenChange={(o) => { if (!o) setDeleteTarget(null); }}>
         <DialogContent className="max-w-sm">
-          <DialogHeader><DialogTitle>Delete category?</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>Delete main category?</DialogTitle></DialogHeader>
           {deleteBlocked ? (
-            <p className="text-sm text-muted-foreground">
-              <strong>{deleteTarget?.name}</strong> has {productCounts[deleteTarget?.id] ?? 0} products assigned to it.
-              Reassign or delete those products first.
-            </p>
+            <p className="text-sm text-muted-foreground">{deleteBlockedReason}</p>
           ) : (
             <p className="text-sm text-muted-foreground">
               "<strong>{deleteTarget?.name}</strong>" will be permanently removed. This cannot be undone.

@@ -47,7 +47,8 @@ function rowsToSpecs(rows: SpecRow[]): Record<string, string> {
 
 const defaultForm = {
   name: "", slug: "", short_description: "", description: "",
-  category_id: "", price: "", compare_at_price: "", stock: "0",
+  main_category_id: "", category_id: "",
+  price: "", compare_at_price: "", stock: "0",
   is_featured: false, is_active: true,
 };
 type FormState = typeof defaultForm;
@@ -145,11 +146,15 @@ function AdminProducts() {
   function openEdit(p: any) {
     setEditProduct(p);
     setSlugManual(true);
+    // Derive main_category_id: if the product's category has a parent_id, use that; otherwise it IS a main category
+    const subCat = categories.find((c: any) => c.id === p.category_id);
+    const mainCatId = subCat?.parent_id ?? (subCat && !subCat.parent_id ? "" : "");
     setForm({
       name: p.name ?? "",
       slug: p.slug ?? "",
       short_description: p.short_description ?? "",
       description: p.description ?? "",
+      main_category_id: mainCatId,
       category_id: p.category_id ?? "",
       price: p.price_cents ? String(Math.round(p.price_cents / 100)) : "",
       compare_at_price: p.compare_at_price_cents ? String(Math.round(p.compare_at_price_cents / 100)) : "",
@@ -168,9 +173,17 @@ function AdminProducts() {
     setForm((prev) => {
       const next = { ...prev, [k]: v };
       if (k === "name" && !slugManual) next.slug = slugify(v as string);
+      // Changing main category clears the subcategory selection
+      if (k === "main_category_id") next.category_id = "";
       return next;
     });
   }
+
+  // Derived category lists for cascading dropdowns
+  const mainCategories = categories.filter((c: any) => !c.parent_id);
+  const availableSubcategories = form.main_category_id
+    ? categories.filter((c: any) => c.parent_id === form.main_category_id)
+    : [];
 
   // ── image ──
   function handleImageChange(e: React.ChangeEvent<HTMLInputElement>) {
@@ -484,18 +497,38 @@ function AdminProducts() {
 
             {/* ③ Category & Stock */}
             <Section icon={<Tag className="h-4 w-4" />} title="Category & Inventory">
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1.5">
-                  <Label>Category</Label>
-                  <Select value={form.category_id} onValueChange={(v) => setField("category_id", v)}>
-                    <SelectTrigger><SelectValue placeholder="Select…" /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="">None</SelectItem>
-                      {categories.map((c) => (
-                        <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+              <div className="space-y-3">
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1.5">
+                    <Label>Main Category</Label>
+                    <Select value={form.main_category_id} onValueChange={(v) => setField("main_category_id", v)}>
+                      <SelectTrigger><SelectValue placeholder="Select main…" /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="">None</SelectItem>
+                        {mainCategories.map((c: any) => (
+                          <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label>Subcategory</Label>
+                    <Select
+                      value={form.category_id}
+                      onValueChange={(v) => setField("category_id", v)}
+                      disabled={!form.main_category_id || availableSubcategories.length === 0}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder={!form.main_category_id ? "Pick main first" : "Select sub…"} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="">None</SelectItem>
+                        {availableSubcategories.map((c: any) => (
+                          <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
                 <div className="space-y-1.5">
                   <Label htmlFor="p-stock">Stock Quantity</Label>

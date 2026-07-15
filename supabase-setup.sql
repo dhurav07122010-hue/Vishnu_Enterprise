@@ -309,7 +309,13 @@ CREATE POLICY "slider_anon_write" ON slider_items
 -- Add is_visible column to categories if it doesn't exist yet
 ALTER TABLE categories ADD COLUMN IF NOT EXISTS is_visible boolean NOT NULL DEFAULT true;
 
--- ── 7. SEED CATEGORIES ───────────────────────────────────────
+-- ── 7. CATEGORY HIERARCHY MIGRATION ─────────────────────────
+-- Run this if upgrading from the flat category system.
+-- Adds parent_id (self-referential) and image_url to categories.
+ALTER TABLE categories ADD COLUMN IF NOT EXISTS parent_id uuid REFERENCES categories(id) ON DELETE CASCADE;
+ALTER TABLE categories ADD COLUMN IF NOT EXISTS image_url text;
+
+-- ── 8. SEED CATEGORIES ───────────────────────────────────────
 INSERT INTO categories (name, slug, description, sort_order) VALUES
   ('Mirror',   'mirror',   'Iridescent mirror-finish visors',         1),
   ('Tinted',   'tinted',   'Smoke and tinted visors for bright days',  2),

@@ -1,111 +1,267 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
-import { Search, SlidersHorizontal } from "lucide-react";
+import { Search, SlidersHorizontal, ChevronRight, ArrowLeft, LayoutGrid } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { ProductCard } from "@/components/site/product-card";
-import { categoriesQuery, productsQuery } from "@/lib/products";
+import { allCategoriesQuery, productsQuery } from "@/lib/products";
 import { formatPrice } from "@/lib/site";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/store")({
+  validateSearch: (search: Record<string, unknown>) => ({
+    main: typeof search.main === "string" ? search.main : undefined,
+    sub: typeof search.sub === "string" ? search.sub : undefined,
+  }),
   head: () => ({
     meta: [
-      { title: "Shop Helmet Visors — Vishnu Enterprises" },
+      { title: "Shop — Vishnu Enterprises" },
       {
         name: "description",
         content:
-          "Browse premium mirror, tinted and clear helmet visors from Vishnu Enterprises. Delhi-wide delivery, COD and UPI accepted.",
+          "Browse premium helmet visors and accessories from Vishnu Enterprises. Delhi-wide delivery, COD and UPI accepted.",
       },
-      { property: "og:title", content: "Shop Helmet Visors — Vishnu Enterprises" },
+      { property: "og:title", content: "Shop — Vishnu Enterprises" },
       {
         property: "og:description",
-        content: "Mirror, tinted and clear helmet visors. Shop online — COD and UPI accepted.",
+        content: "Helmet visors and accessories. Shop online — COD and UPI accepted.",
       },
     ],
   }),
   loader: async ({ context }) => {
     await Promise.all([
       context.queryClient.ensureQueryData(productsQuery()),
-      context.queryClient.ensureQueryData(categoriesQuery()),
+      context.queryClient.ensureQueryData(allCategoriesQuery()),
     ]);
   },
   component: StorePage,
 });
 
 function StorePage() {
-  const { data: products } = useSuspenseQuery(productsQuery());
-  const { data: categories } = useSuspenseQuery(categoriesQuery());
+  const navigate = useNavigate({ from: "/store" });
+  const { main: mainId, sub: subId } = Route.useSearch();
 
+  const { data: products } = useSuspenseQuery(productsQuery());
+  const { data: allCategories } = useSuspenseQuery(allCategoriesQuery());
+
+  // Split into main vs sub categories
+  const mainCategories = useMemo(
+    () => allCategories.filter((c) => !c.parent_id && c.is_visible !== false),
+    [allCategories],
+  );
+
+  const selectedMain = mainId ? allCategories.find((c) => c.id === mainId) : null;
+  const selectedSub = subId ? allCategories.find((c) => c.id === subId) : null;
+
+  // Subcategories for the selected main category
+  const subcategories = useMemo(
+    () =>
+      mainId
+        ? allCategories.filter((c) => c.parent_id === mainId && c.is_visible !== false)
+        : [],
+    [allCategories, mainId],
+  );
+
+  // --- Product grid state (only used in products view) ---
   const maxPrice = useMemo(
     () => Math.max(...products.map((p) => p.price_cents), 100000),
     [products],
   );
-
   const [query, setQuery] = useState("");
-  const [cat, setCat] = useState<string | null>(null);
   const [price, setPrice] = useState<[number, number]>([0, maxPrice]);
   const [showFilters, setShowFilters] = useState(false);
 
-  const filtered = useMemo(() => {
+  // Products filtered to the selected subcategory
+  const filteredProducts = useMemo(() => {
+    if (!subId) return [];
     const q = query.trim().toLowerCase();
     return products.filter((p) => {
-      if (cat && p.category_id !== cat) return false;
+      if (p.category_id !== subId) return false;
       if (p.price_cents < price[0] || p.price_cents > price[1]) return false;
       if (q && !`${p.name} ${p.short_description ?? ""}`.toLowerCase().includes(q)) return false;
       return true;
     });
-  }, [products, query, cat, price]);
+  }, [products, subId, query, price]);
 
-  // visible categories (respect is_visible flag if present, default true)
-  const visibleCategories = categories.filter((c) => c.is_visible !== false);
+  // ── View: Main category grid ──────────────────────────────────────────────
+  if (!mainId) {
+    return (
+      <div className="container-page py-10 md:py-14">
+        <header className="mb-8">
+          <h1 className="font-display text-3xl font-bold sm:text-4xl">Shop</h1>
+          <p className="mt-2 text-muted-foreground">Browse our collections</p>
+        </header>
 
+        {mainCategories.length === 0 ? (
+          <div className="rounded-2xl border-2 border-dashed p-20 text-center text-muted-foreground">
+            <LayoutGrid className="mx-auto mb-4 h-10 w-10 opacity-30" />
+            <p>No categories configured yet.</p>
+          </div>
+        ) : (
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            {mainCategories.map((cat) => {
+              const catSubs = allCategories.filter((c) => c.parent_id === cat.id);
+              const catSubIds = new Set(catSubs.map((c) => c.id));
+              const productCount = products.filter((p) => p.category_id && catSubIds.has(p.category_id)).length;
+              return (
+                <button
+                  key={cat.id}
+                  onClick={() => navigate({ search: { main: cat.id } })}
+                  className="group rounded-2xl overflow-hidden border bg-card shadow-card-soft hover:shadow-elevated transition-all text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                >
+                  <div className="relative h-48 bg-gradient-to-br from-primary/15 via-primary/5 to-background overflow-hidden">
+                    {cat.image_url ? (
+                      <img
+                        src={cat.image_url}
+                        alt={cat.name}
+                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                        loading="lazy"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center">
+                        <span className="text-8xl font-bold text-primary/10 select-none font-display">
+                          {cat.name.charAt(0).toUpperCase()}
+                        </span>
+                      </div>
+                    )}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
+                    <div className="absolute bottom-3 left-4 right-4 flex items-center justify-between">
+                      <span className="text-white/80 text-xs">
+                        {catSubs.length > 0 && `${catSubs.length} ${catSubs.length === 1 ? "subcategory" : "subcategories"} · `}
+                        {productCount} {productCount === 1 ? "product" : "products"}
+                      </span>
+                      <ChevronRight className="h-4 w-4 text-white/70 group-hover:translate-x-0.5 transition-transform" />
+                    </div>
+                  </div>
+                  <div className="p-4">
+                    <h3 className="font-display font-bold text-lg group-hover:text-primary transition-colors">
+                      {cat.name}
+                    </h3>
+                    {cat.description && (
+                      <p className="mt-1 text-sm text-muted-foreground line-clamp-2">{cat.description}</p>
+                    )}
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // ── View: Subcategory grid ────────────────────────────────────────────────
+  if (mainId && !subId) {
+    return (
+      <div className="container-page py-10 md:py-14">
+        {/* Breadcrumb */}
+        <nav className="mb-6 flex items-center gap-1.5 text-sm text-muted-foreground">
+          <button onClick={() => navigate({ search: {} })} className="hover:text-foreground transition-colors">
+            Store
+          </button>
+          <ChevronRight className="h-3.5 w-3.5" />
+          <span className="text-foreground font-medium">{selectedMain?.name ?? "Category"}</span>
+        </nav>
+
+        <header className="mb-8 flex items-center gap-4">
+          <button
+            onClick={() => navigate({ search: {} })}
+            className="grid h-9 w-9 shrink-0 place-items-center rounded-xl border bg-card hover:bg-accent transition-colors"
+            aria-label="Back"
+          >
+            <ArrowLeft className="h-4 w-4" />
+          </button>
+          <div>
+            <h1 className="font-display text-3xl font-bold">{selectedMain?.name}</h1>
+            {selectedMain?.description && (
+              <p className="mt-1 text-muted-foreground">{selectedMain.description}</p>
+            )}
+          </div>
+        </header>
+
+        {subcategories.length === 0 ? (
+          <div className="rounded-2xl border-2 border-dashed p-20 text-center text-muted-foreground">
+            <p>No subcategories in this category yet.</p>
+          </div>
+        ) : (
+          <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+            {subcategories.map((sub) => {
+              const count = products.filter((p) => p.category_id === sub.id).length;
+              return (
+                <button
+                  key={sub.id}
+                  onClick={() => navigate({ search: { main: mainId, sub: sub.id } })}
+                  className="group rounded-2xl overflow-hidden border bg-card shadow-card-soft hover:shadow-elevated transition-all text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                >
+                  {sub.image_url && (
+                    <div className="h-32 overflow-hidden">
+                      <img
+                        src={sub.image_url}
+                        alt={sub.name}
+                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                        loading="lazy"
+                      />
+                    </div>
+                  )}
+                  <div className={cn("p-4", !sub.image_url && "py-6")}>
+                    <div className="flex items-center justify-between gap-2">
+                      <h3 className="font-semibold group-hover:text-primary transition-colors">
+                        {sub.name}
+                      </h3>
+                      <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:translate-x-0.5 transition-transform shrink-0" />
+                    </div>
+                    {sub.description && (
+                      <p className="mt-1 text-xs text-muted-foreground line-clamp-2">{sub.description}</p>
+                    )}
+                    <p className="mt-2 text-xs text-muted-foreground">
+                      {count} {count === 1 ? "product" : "products"}
+                    </p>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // ── View: Product grid ────────────────────────────────────────────────────
   return (
     <div className="container-page py-10 md:py-14">
-      <header className="mb-6">
-        <h1 className="font-display text-3xl font-bold sm:text-4xl">Shop</h1>
-        <p className="mt-2 text-muted-foreground">
-          {filtered.length} of {products.length} products
-        </p>
-      </header>
+      {/* Breadcrumb */}
+      <nav className="mb-6 flex items-center gap-1.5 text-sm text-muted-foreground flex-wrap">
+        <button onClick={() => navigate({ search: {} })} className="hover:text-foreground transition-colors">
+          Store
+        </button>
+        <ChevronRight className="h-3.5 w-3.5" />
+        <button
+          onClick={() => navigate({ search: { main: mainId } })}
+          className="hover:text-foreground transition-colors"
+        >
+          {selectedMain?.name ?? "Category"}
+        </button>
+        <ChevronRight className="h-3.5 w-3.5" />
+        <span className="text-foreground font-medium">{selectedSub?.name ?? "Products"}</span>
+      </nav>
 
-      {/* Category tab bar */}
-      {visibleCategories.length > 0 && (
-        <div className="mb-6 flex gap-2 overflow-x-auto pb-1 scrollbar-none">
-          <button
-            onClick={() => setCat(null)}
-            className={cn(
-              "shrink-0 rounded-full px-4 py-2 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-              !cat
-                ? "bg-primary text-primary-foreground shadow-elegant"
-                : "border bg-card text-foreground hover:bg-accent",
-            )}
-          >
-            All Products
-            <span className="ml-1.5 text-xs opacity-70">({products.length})</span>
-          </button>
-          {visibleCategories.map((c) => {
-            const count = products.filter((p) => p.category_id === c.id).length;
-            return (
-              <button
-                key={c.id}
-                onClick={() => setCat(c.id)}
-                className={cn(
-                  "shrink-0 rounded-full px-4 py-2 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-                  cat === c.id
-                    ? "bg-primary text-primary-foreground shadow-elegant"
-                    : "border bg-card text-foreground hover:bg-accent",
-                )}
-              >
-                {c.name}
-                <span className="ml-1.5 text-xs opacity-70">({count})</span>
-              </button>
-            );
-          })}
+      <header className="mb-6 flex items-center gap-4">
+        <button
+          onClick={() => navigate({ search: { main: mainId } })}
+          className="grid h-9 w-9 shrink-0 place-items-center rounded-xl border bg-card hover:bg-accent transition-colors"
+          aria-label="Back"
+        >
+          <ArrowLeft className="h-4 w-4" />
+        </button>
+        <div>
+          <h1 className="font-display text-3xl font-bold">{selectedSub?.name}</h1>
+          <p className="mt-1 text-muted-foreground">
+            {filteredProducts.length} of {products.filter((p) => p.category_id === subId).length} products
+          </p>
         </div>
-      )}
+      </header>
 
       <div className="grid gap-8 lg:grid-cols-[260px_1fr]">
         <aside
@@ -121,36 +277,9 @@ function StorePage() {
               <Input
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                placeholder="Search visors…"
+                placeholder="Search products…"
                 className="pl-9"
               />
-            </div>
-          </div>
-
-          <div>
-            <p className="mb-2 text-sm font-semibold">Category</p>
-            <div className="space-y-1.5">
-              <button
-                onClick={() => setCat(null)}
-                className={cn(
-                  "w-full rounded-lg px-3 py-2 text-left text-sm transition-colors",
-                  !cat ? "bg-accent font-medium text-accent-foreground" : "hover:bg-accent/60",
-                )}
-              >
-                All categories
-              </button>
-              {categories.map((c) => (
-                <button
-                  key={c.id}
-                  onClick={() => setCat(c.id)}
-                  className={cn(
-                    "w-full rounded-lg px-3 py-2 text-left text-sm transition-colors",
-                    cat === c.id ? "bg-accent font-medium text-accent-foreground" : "hover:bg-accent/60",
-                  )}
-                >
-                  {c.name}
-                </button>
-              ))}
             </div>
           </div>
 
@@ -174,7 +303,6 @@ function StorePage() {
             className="w-full"
             onClick={() => {
               setQuery("");
-              setCat(null);
               setPrice([0, maxPrice]);
             }}
           >
@@ -192,13 +320,13 @@ function StorePage() {
             {showFilters ? "Hide filters" : "Filters"}
           </Button>
 
-          {filtered.length === 0 ? (
+          {filteredProducts.length === 0 ? (
             <div className="rounded-2xl border bg-card p-10 text-center text-muted-foreground">
-              No visors match your filters.
+              No products match your filters.
             </div>
           ) : (
             <div className="grid grid-cols-2 gap-4 sm:gap-6 xl:grid-cols-3">
-              {filtered.map((p) => (
+              {filteredProducts.map((p) => (
                 <ProductCard key={p.id} product={p} />
               ))}
             </div>

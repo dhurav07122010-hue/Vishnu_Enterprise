@@ -33,6 +33,7 @@ import { Route as AdminNewsletterRouteImport } from './routes/admin.newsletter'
 import { Route as AdminMessagesRouteImport } from './routes/admin.messages'
 import { Route as AdminSliderRouteImport } from './routes/admin.slider'
 import { Route as AdminCategoriesRouteImport } from './routes/admin.categories'
+import { Route as AdminSubcategoriesRouteImport } from './routes/admin.subcategories'
 
 const WishlistRoute = WishlistRouteImport.update({
   id: '/wishlist',
@@ -155,6 +156,11 @@ const AdminCategoriesRoute = AdminCategoriesRouteImport.update({
   path: '/categories',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminSubcategoriesRoute = AdminSubcategoriesRouteImport.update({
+  id: '/subcategories',
+  path: '/subcategories',
+  getParentRoute: () => AdminRoute,
+} as any)
 
 interface AdminRouteChildren {
   AdminIndexRoute: typeof AdminIndexRoute
@@ -165,6 +171,7 @@ interface AdminRouteChildren {
   AdminSettingsRoute: typeof AdminSettingsRoute
   AdminSliderRoute: typeof AdminSliderRoute
   AdminCategoriesRoute: typeof AdminCategoriesRoute
+  AdminSubcategoriesRoute: typeof AdminSubcategoriesRoute
 }
 
 const AdminRouteChildren: AdminRouteChildren = {
@@ -176,6 +183,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminSettingsRoute: AdminSettingsRoute,
   AdminSliderRoute: AdminSliderRoute,
   AdminCategoriesRoute: AdminCategoriesRoute,
+  AdminSubcategoriesRoute: AdminSubcategoriesRoute,
 }
 
 const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
@@ -264,6 +272,7 @@ export interface FileRoutesByFullPath {
   '/admin/settings': typeof AdminSettingsRoute
   '/admin/slider': typeof AdminSliderRoute
   '/admin/categories': typeof AdminCategoriesRoute
+  '/admin/subcategories': typeof AdminSubcategoriesRoute
 }
 
 export interface FileRoutesByTo {
@@ -291,6 +300,7 @@ export interface FileRoutesByTo {
   '/admin/settings': typeof AdminSettingsRoute
   '/admin/slider': typeof AdminSliderRoute
   '/admin/categories': typeof AdminCategoriesRoute
+  '/admin/subcategories': typeof AdminSubcategoriesRoute
 }
 
 export type FullPaths =
@@ -318,6 +328,7 @@ export type FullPaths =
   | '/admin/settings'
   | '/admin/slider'
   | '/admin/categories'
+  | '/admin/subcategories'
 
 export type To =
   | '/'
@@ -344,6 +355,7 @@ export type To =
   | '/admin/settings'
   | '/admin/slider'
   | '/admin/categories'
+  | '/admin/subcategories'
 
 export type Id =
   | '__root__'
@@ -371,6 +383,7 @@ export type Id =
   | '/admin/settings'
   | '/admin/slider'
   | '/admin/categories'
+  | '/admin/subcategories'
 
 export interface FileRoutesById {
   '__root__': typeof rootRouteImport
@@ -398,4 +411,5 @@ export interface FileRoutesById {
   '/admin/settings': typeof AdminSettingsRoute
   '/admin/slider': typeof AdminSliderRoute
   '/admin/categories': typeof AdminCategoriesRoute
+  '/admin/subcategories': typeof AdminSubcategoriesRoute
 }

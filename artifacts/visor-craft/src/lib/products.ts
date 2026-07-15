@@ -23,6 +23,10 @@ export interface Category {
   slug: string;
   name: string;
   description: string | null;
+  parent_id: string | null;
+  image_url: string | null;
+  is_visible: boolean;
+  sort_order: number;
 }
 
 export interface Review {
@@ -48,13 +52,40 @@ async function fetchProducts(): Promise<Product[]> {
   return (data ?? []) as unknown as Product[];
 }
 
-async function fetchCategories(): Promise<Category[]> {
+async function fetchAllCategories(): Promise<Category[]> {
+  // Try fetching with new hierarchy columns first; fall back gracefully if
+  // the migration hasn't been run yet (parent_id / image_url don't exist).
   const { data, error } = await supabase
     .from("categories")
-    .select("id, slug, name, description")
+    .select("id, slug, name, description, parent_id, image_url, is_visible, sort_order")
     .order("sort_order", { ascending: true });
-  if (error) throw error;
-  return (data ?? []) as Category[];
+
+  if (error) {
+    // Migration not run yet — fetch base columns only and treat all as top-level
+    const { data: fallback, error: fbErr } = await supabase
+      .from("categories")
+      .select("id, slug, name, description, sort_order")
+      .order("sort_order", { ascending: true });
+    if (fbErr) { console.warn("fetchAllCategories:", fbErr.message); return []; }
+    return (fallback ?? []).map((c: any) => ({
+      id: c.id,
+      slug: c.slug,
+      name: c.name,
+      description: c.description ?? null,
+      parent_id: null,
+      image_url: null,
+      is_visible: true,
+      sort_order: c.sort_order ?? 0,
+    })) as Category[];
+  }
+
+  return (data ?? []).map((c: any) => ({
+    ...c,
+    parent_id: c.parent_id ?? null,
+    image_url: c.image_url ?? null,
+    is_visible: c.is_visible !== false,
+    sort_order: c.sort_order ?? 0,
+  })) as Category[];
 }
 
 async function fetchReviewsFor(productId: string): Promise<Review[]> {
@@ -72,8 +103,11 @@ async function fetchReviewsFor(productId: string): Promise<Review[]> {
 export const productsQuery = () =>
   queryOptions({ queryKey: ["products"], queryFn: fetchProducts, staleTime: 60_000 });
 
-export const categoriesQuery = () =>
-  queryOptions({ queryKey: ["categories"], queryFn: fetchCategories, staleTime: 5 * 60_000 });
+export const allCategoriesQuery = () =>
+  queryOptions({ queryKey: ["categories"], queryFn: fetchAllCategories, staleTime: 60_000 });
+
+// Backward-compat alias — existing usages keep working
+export const categoriesQuery = allCategoriesQuery;
 
 export const reviewsQuery = (productId: string) =>
   queryOptions({
