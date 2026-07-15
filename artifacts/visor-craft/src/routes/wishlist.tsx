@@ -13,6 +13,9 @@ import { cart } from "@/lib/cart";
 import { wishlist, useWishlist } from "@/lib/wishlist";
 
 export const Route = createFileRoute("/wishlist")({
+  loader: async ({ context }) => {
+    await context.queryClient.ensureQueryData(productsQuery());
+  },
   head: () => ({
     meta: [
       { title: "Wishlist — Vishnu Enterprises" },

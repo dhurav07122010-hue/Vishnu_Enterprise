@@ -10,6 +10,9 @@ import { useAuth } from "@/lib/auth";
 import { useRequireAuth } from "@/lib/require-auth";
 
 export const Route = createFileRoute("/orders/")({
+  loader: async ({ context }) => {
+    await context.queryClient.ensureQueryData(userOrdersQuery());
+  },
   head: () => ({
     meta: [
       { title: "My Orders — Vishnu Enterprises" },

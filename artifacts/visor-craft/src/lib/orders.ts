@@ -85,7 +85,12 @@ async function fetchUserOrders(): Promise<OrderWithItems[]> {
     .from("orders")
     .select("*")
     .order("created_at", { ascending: false });
-  if (error) throw error;
+  // Return empty on auth/permission errors — unauthenticated users are
+  // redirected to /login by useRequireAuth after the component renders.
+  if (error) {
+    console.warn("[orders] fetchUserOrders error:", error.message);
+    return [];
+  }
   const orderPromises = (orders ?? []).map(async (order) => {
     const { data: items, error: itemsError } = await supabase
       .from("order_items")
