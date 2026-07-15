@@ -1,4 +1,4 @@
-import { Link } from "@tanstack/react-router";
+import { Link, useRouterState } from "@tanstack/react-router";
 import { Menu, ShoppingBag, X, Heart, LogOut, Moon, Sun, User } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
@@ -73,9 +73,15 @@ function UserAvatar({ user }: { user: NonNullable<ReturnType<typeof useAuth>["us
   );
 }
 
+function isLinkActive(pathname: string, to: string) {
+  if (to === "/") return pathname === "/";
+  return pathname === to || pathname.startsWith(`${to}/`);
+}
+
 export function Navbar() {
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
   const cartCount = useCartCount();
   const wishlistCount = useWishlistCount();
   const { user, signOut } = useAuth();
@@ -212,9 +218,10 @@ export function Navbar() {
               <Link
                 to={l.to}
                 onClick={() => setOpen(false)}
-                className="rounded-lg px-3 py-3 text-sm font-medium text-foreground transition-colors hover:bg-accent"
-                activeProps={{ className: "text-primary bg-accent" }}
-                activeOptions={{ exact: l.to === "/" }}
+                className={cn(
+                  "block rounded-lg px-3 py-3 text-sm font-medium text-foreground transition-colors hover:bg-accent",
+                  isLinkActive(pathname, l.to) && "text-primary bg-accent",
+                )}
               >
                 {l.label}
               </Link>
