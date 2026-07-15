@@ -83,7 +83,7 @@ function LogoSettingsCard() {
         <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleFileChange} />
         {logoUrl ? (
           <div className="relative group flex items-center justify-center rounded-xl border bg-muted/40 p-4">
-            <img src={logoUrl} alt="Store logo" className="h-20 max-w-[320px] object-contain" />
+            <img src={logoUrl} alt="Store logo" className="h-16 max-w-[420px] object-contain" />
             <div className="absolute inset-0 flex items-center justify-center gap-2 rounded-xl bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity">
               <Button size="sm" variant="secondary" type="button" onClick={() => fileInputRef.current?.click()}>
                 Change

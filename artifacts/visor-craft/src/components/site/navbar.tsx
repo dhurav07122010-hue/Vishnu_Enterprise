@@ -107,7 +107,7 @@ export function Navbar() {
         scrolled && "shadow-md",
       )}
     >
-      <div className="container-page flex h-16 items-center gap-4 sm:h-20">
+      <div className="container-page flex h-16 items-center gap-4 sm:h-24">
         {/* Menu toggle */}
         <Button
           variant="ghost"
@@ -125,7 +125,7 @@ export function Navbar() {
             <img
               src={logoUrl}
               alt={siteName}
-              className="h-12 max-w-[220px] object-contain sm:h-16 sm:max-w-[320px]"
+              className="h-14 max-w-[300px] object-contain sm:h-20 sm:max-w-[560px]"
             />
           ) : (
             <span className="h-10 w-40 rounded-lg border border-dashed border-border/70" aria-hidden="true" />
