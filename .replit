@@ -22,5 +22,5 @@ timeoutMs = 20000
 [userenv]
 
 [userenv.shared]
-VITE_SUPABASE_PUBLISHABLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNoa29uand4cWtjZGVjb2J0bnZqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM4NzYzMDUsImV4cCI6MjA5OTQ1MjMwNX0.mV3z3Y1TEIx-v26UZgRqDlw5ZlpZ7dQ7OdHlQzl868Y"
-VITE_SUPABASE_URL = "https://shkonjwxqkcdecobtnvj.supabase.co"
+VITE_SUPABASE_PUBLISHABLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRyYnprdXdwcGduc2lqaWxvcWxvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQwMTk2NTYsImV4cCI6MjA5OTU5NTY1Nn0.pMlYmSWd0vKjnkXH3KNqCwt0tZnGHGxQjMvbkqmc2WA"
+VITE_SUPABASE_URL = "https://trbzkuwppgnsijiloqlo.supabase.co"

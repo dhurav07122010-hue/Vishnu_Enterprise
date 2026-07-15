@@ -93,6 +93,15 @@ function AdminProducts() {
   const [categories, setCategories] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const [filterMain, setFilterMain] = useState<string>("all");
+  const [filterSub, setFilterSub] = useState<string>("all");
+
+  // Bulk selection
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkOpen, setBulkOpen] = useState(false);
+  const [bulkMainId, setBulkMainId] = useState("");
+  const [bulkSubId, setBulkSubId] = useState("");
+  const [bulkSaving, setBulkSaving] = useState(false);
 
   // Dialog
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -184,6 +193,25 @@ function AdminProducts() {
   const availableSubcategories = form.main_category_id
     ? categories.filter((c: any) => c.parent_id === form.main_category_id)
     : [];
+
+  // Subcategories available for the bulk-reassign dialog
+  const bulkAvailableSubcategories = bulkMainId
+    ? categories.filter((c: any) => c.parent_id === bulkMainId)
+    : [];
+
+  // Subcategories available for the filter bar (depends on filterMain)
+  const filterAvailableSubcategories = filterMain !== "all"
+    ? categories.filter((c: any) => c.parent_id === filterMain)
+    : [];
+
+  // A product's category could itself be a main category (legacy/uncategorized-under-main)
+  // or a subcategory — resolve the main category id either way.
+  function mainIdForCategory(categoryId: string | null): string | null {
+    if (!categoryId) return null;
+    const cat = categories.find((c: any) => c.id === categoryId);
+    if (!cat) return null;
+    return cat.parent_id ?? cat.id;
+  }
 
   // ── image ──
   function handleImageChange(e: React.ChangeEvent<HTMLInputElement>) {
@@ -279,6 +307,48 @@ function AdminProducts() {
     if (!error) setProducts((prev) => prev.map((x) => x.id === p.id ? { ...x, is_active: next } : x));
   }
 
+  // ── bulk selection ──
+  function toggleSelected(id: string) {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  }
+
+  function toggleSelectAllVisible(ids: string[]) {
+    setSelectedIds((prev) => {
+      const allSelected = ids.length > 0 && ids.every((id) => prev.has(id));
+      if (allSelected) {
+        const next = new Set(prev);
+        ids.forEach((id) => next.delete(id));
+        return next;
+      }
+      return new Set([...prev, ...ids]);
+    });
+  }
+
+  function openBulkAssign() {
+    setBulkMainId("");
+    setBulkSubId("");
+    setBulkOpen(true);
+  }
+
+  async function handleBulkAssign() {
+    if (selectedIds.size === 0) return;
+    if (!bulkMainId) { toast.error("Select a main category"); return; }
+    setBulkSaving(true);
+    const targetCategoryId = bulkSubId || bulkMainId;
+    const ids = Array.from(selectedIds);
+    const { error } = await supabase.from("products").update({ category_id: targetCategoryId }).in("id", ids);
+    setBulkSaving(false);
+    if (error) { toast.error(error.message); return; }
+    setProducts((prev) => prev.map((p) => ids.includes(p.id) ? { ...p, category_id: targetCategoryId } : p));
+    toast.success(`Updated category for ${ids.length} ${ids.length === 1 ? "product" : "products"}`);
+    setBulkOpen(false);
+    setSelectedIds(new Set());
+  }
+
   // ── delete ──
   async function confirmDelete() {
     if (!deleteTarget) return;
@@ -292,9 +362,14 @@ function AdminProducts() {
 
   if (!ready) return null;
 
-  const filtered = products.filter((p) =>
-    !search || p.name?.toLowerCase().includes(search.toLowerCase())
-  );
+  const filtered = products.filter((p) => {
+    if (search && !p.name?.toLowerCase().includes(search.toLowerCase())) return false;
+    if (filterMain !== "all" && mainIdForCategory(p.category_id) !== filterMain) return false;
+    if (filterSub !== "all" && p.category_id !== filterSub) return false;
+    return true;
+  });
+  const visibleIds = filtered.map((p) => p.id);
+  const allVisibleSelected = visibleIds.length > 0 && visibleIds.every((id) => selectedIds.has(id));
 
   return (
     <div className="space-y-6">
@@ -309,11 +384,68 @@ function AdminProducts() {
         </Button>
       </div>
 
-      {/* Search */}
-      <div className="relative max-w-sm">
-        <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-        <Input placeholder="Search products…" value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9" />
+      {/* Search & category filters */}
+      <div className="flex flex-wrap items-end gap-3">
+        <div className="relative max-w-sm flex-1 min-w-[220px]">
+          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Input placeholder="Search products…" value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9" />
+        </div>
+        <div className="space-y-1.5">
+          <Label className="text-xs text-muted-foreground">Main category</Label>
+          <Select
+            value={filterMain}
+            onValueChange={(v) => { setFilterMain(v); setFilterSub("all"); }}
+          >
+            <SelectTrigger className="w-44"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All main categories</SelectItem>
+              {mainCategories.map((c: any) => (
+                <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="space-y-1.5">
+          <Label className="text-xs text-muted-foreground">Subcategory</Label>
+          <Select
+            value={filterSub}
+            onValueChange={setFilterSub}
+            disabled={filterMain === "all" || filterAvailableSubcategories.length === 0}
+          >
+            <SelectTrigger className="w-44"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All subcategories</SelectItem>
+              {filterAvailableSubcategories.map((c: any) => (
+                <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        {(filterMain !== "all" || filterSub !== "all" || search) && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => { setFilterMain("all"); setFilterSub("all"); setSearch(""); }}
+          >
+            Clear filters
+          </Button>
+        )}
       </div>
+
+      {/* Bulk actions bar */}
+      {selectedIds.size > 0 && (
+        <div className="flex items-center justify-between gap-3 rounded-xl border bg-primary/5 px-4 py-2.5">
+          <p className="text-sm font-medium">{selectedIds.size} selected</p>
+          <div className="flex items-center gap-2">
+            <Button size="sm" variant="outline" onClick={openBulkAssign}>
+              <Tag className="mr-1.5 h-3.5 w-3.5" /> Change category
+            </Button>
+            <Button size="sm" variant="ghost" onClick={() => setSelectedIds(new Set())}>
+              Clear selection
+            </Button>
+          </div>
+        </div>
+      )}
 
       {/* Product table */}
       {loading ? (
@@ -334,6 +466,15 @@ function AdminProducts() {
           <table className="w-full text-sm">
             <thead className="border-b bg-muted/40">
               <tr>
+                <th className="w-10 px-4 py-3">
+                  <input
+                    type="checkbox"
+                    className="h-4 w-4 rounded border-input accent-primary"
+                    checked={allVisibleSelected}
+                    onChange={() => toggleSelectAllVisible(visibleIds)}
+                    aria-label="Select all visible products"
+                  />
+                </th>
                 <th className="px-4 py-3 text-left font-medium text-muted-foreground">Product</th>
                 <th className="px-4 py-3 text-left font-medium text-muted-foreground hidden md:table-cell">Category</th>
                 <th className="px-4 py-3 text-right font-medium text-muted-foreground">Price</th>
@@ -345,8 +486,18 @@ function AdminProducts() {
             <tbody className="divide-y">
               {filtered.map((product) => {
                 const cat = categories.find((c) => c.id === product.category_id);
+                const parentCat = cat?.parent_id ? categories.find((c) => c.id === cat.parent_id) : null;
                 return (
                   <tr key={product.id} className="hover:bg-muted/20 transition-colors">
+                    <td className="px-4 py-3">
+                      <input
+                        type="checkbox"
+                        className="h-4 w-4 rounded border-input accent-primary"
+                        checked={selectedIds.has(product.id)}
+                        onChange={() => toggleSelected(product.id)}
+                        aria-label={`Select ${product.name}`}
+                      />
+                    </td>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-3">
                         <img
@@ -362,7 +513,14 @@ function AdminProducts() {
                       </div>
                     </td>
                     <td className="px-4 py-3 hidden md:table-cell">
-                      {cat ? <Badge variant="secondary">{cat.name}</Badge> : <span className="text-muted-foreground">—</span>}
+                      {cat ? (
+                        <div className="flex flex-wrap items-center gap-1">
+                          {parentCat && <Badge variant="outline">{parentCat.name}</Badge>}
+                          <Badge variant="secondary">{cat.name}</Badge>
+                        </div>
+                      ) : (
+                        <span className="text-muted-foreground">—</span>
+                      )}
                     </td>
                     <td className="px-4 py-3 text-right font-semibold">
                       <div>{formatPrice(product.price_cents)}</div>
@@ -653,6 +811,51 @@ function AdminProducts() {
             <Button variant="ghost" onClick={() => setDialogOpen(false)}>Cancel</Button>
             <Button onClick={handleSave} disabled={saving} className="shadow-elegant min-w-32">
               {saving ? (uploading ? "Uploading…" : "Saving…") : editProduct ? "Save Changes" : "Add Product"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Bulk category reassignment */}
+      <Dialog open={bulkOpen} onOpenChange={setBulkOpen}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Change category for {selectedIds.size} {selectedIds.size === 1 ? "product" : "products"}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 py-2">
+            <div className="space-y-1.5">
+              <Label>Main Category <span className="text-destructive">*</span></Label>
+              <Select value={bulkMainId} onValueChange={(v) => { setBulkMainId(v); setBulkSubId(""); }}>
+                <SelectTrigger><SelectValue placeholder="Select main…" /></SelectTrigger>
+                <SelectContent>
+                  {mainCategories.map((c: any) => (
+                    <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1.5">
+              <Label>Subcategory</Label>
+              <Select
+                value={bulkSubId}
+                onValueChange={setBulkSubId}
+                disabled={!bulkMainId || bulkAvailableSubcategories.length === 0}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder={!bulkMainId ? "Pick main first" : "Select sub… (optional)"} />
+                </SelectTrigger>
+                <SelectContent>
+                  {bulkAvailableSubcategories.map((c: any) => (
+                    <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter className="gap-2">
+            <Button variant="ghost" onClick={() => setBulkOpen(false)} disabled={bulkSaving}>Cancel</Button>
+            <Button onClick={handleBulkAssign} disabled={bulkSaving || !bulkMainId}>
+              {bulkSaving ? "Updating…" : "Apply"}
             </Button>
           </DialogFooter>
         </DialogContent>

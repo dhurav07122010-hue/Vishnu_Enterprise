@@ -19,7 +19,10 @@ export type Database = {
           created_at: string
           description: string | null
           id: string
+          image_url: string | null
+          is_visible: boolean
           name: string
+          parent_id: string | null
           slug: string
           sort_order: number
           updated_at: string
@@ -28,7 +31,10 @@ export type Database = {
           created_at?: string
           description?: string | null
           id?: string
+          image_url?: string | null
+          is_visible?: boolean
           name: string
+          parent_id?: string | null
           slug: string
           sort_order?: number
           updated_at?: string
@@ -37,12 +43,23 @@ export type Database = {
           created_at?: string
           description?: string | null
           id?: string
+          image_url?: string | null
+          is_visible?: boolean
           name?: string
+          parent_id?: string | null
           slug?: string
           sort_order?: number
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "categories_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       contact_messages: {
         Row: {
