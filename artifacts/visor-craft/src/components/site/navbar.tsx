@@ -107,7 +107,7 @@ export function Navbar() {
         scrolled && "shadow-md",
       )}
     >
-      <div className="container-page flex h-16 items-center gap-4">
+      <div className="container-page flex h-16 items-center gap-4 sm:h-20">
         {/* Menu toggle */}
         <Button
           variant="ghost"
@@ -122,7 +122,11 @@ export function Navbar() {
         {/* Logo — set from Admin → Settings */}
         <Link to="/" className="flex flex-1 items-center justify-center" aria-label={siteName}>
           {logoUrl ? (
-            <img src={logoUrl} alt={siteName} className="h-10 max-w-[180px] object-contain" />
+            <img
+              src={logoUrl}
+              alt={siteName}
+              className="h-12 max-w-[220px] object-contain sm:h-16 sm:max-w-[320px]"
+            />
           ) : (
             <span className="h-10 w-40 rounded-lg border border-dashed border-border/70" aria-hidden="true" />
           )}
