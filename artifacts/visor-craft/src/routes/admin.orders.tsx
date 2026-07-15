@@ -6,11 +6,13 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Separator } from "@/components/ui/separator";
 import { supabase } from "@/integrations/supabase/client";
 import { useRequireAdmin } from "@/lib/require-auth";
 import { formatPrice } from "@/lib/site";
-import { ORDER_STATUS_LABEL } from "@/lib/orders";
-import { Package, Search } from "lucide-react";
+import { ORDER_STATUS_LABEL, PAYMENT_STATUS_LABEL } from "@/lib/orders";
+import { Package, Search, Loader2 } from "lucide-react";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/admin/orders")({
   component: AdminOrders,
@@ -24,6 +26,13 @@ function AdminOrders() {
   const [statusFilter, setStatusFilter] = useState("all");
   const [selectedOrder, setSelectedOrder] = useState<any | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
+
+  // Controlled edit state — reset whenever a new order is opened
+  const [editStatus, setEditStatus] = useState("");
+  const [editPaymentStatus, setEditPaymentStatus] = useState("");
+  const [editTrackingCode, setEditTrackingCode] = useState("");
+  const [editNotes, setEditNotes] = useState("");
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     if (!ready) return;
@@ -39,6 +48,16 @@ function AdminOrders() {
     return () => { mounted = false; };
   }, [ready, statusFilter]);
 
+  // Sync controlled fields whenever the selected order changes
+  useEffect(() => {
+    if (selectedOrder) {
+      setEditStatus(selectedOrder.status ?? "pending");
+      setEditPaymentStatus(selectedOrder.payment_status ?? "pending");
+      setEditTrackingCode(selectedOrder.tracking_code ?? "");
+      setEditNotes(selectedOrder.notes ?? "");
+    }
+  }, [selectedOrder]);
+
   const filtered = orders.filter((o) => {
     if (!search) return true;
     const s = search.toLowerCase();
@@ -50,12 +69,26 @@ function AdminOrders() {
     );
   });
 
-  async function updateOrder(orderId: string, status: string, notes: string) {
-    const { error } = await supabase.from("orders").update({ status, notes }).eq("id", orderId);
-    if (!error) {
-      setOrders((prev) => prev.map((o) => (o.id === orderId ? { ...o, status, notes } : o)));
-      setDialogOpen(false);
+  async function handleSave() {
+    if (!selectedOrder) return;
+    setSaving(true);
+    const updates: Record<string, string | null> = {
+      status: editStatus,
+      payment_status: editPaymentStatus,
+      tracking_code: editTrackingCode.trim() || null,
+      notes: editNotes.trim() || null,
+    };
+    const { error } = await supabase.from("orders").update(updates).eq("id", selectedOrder.id);
+    setSaving(false);
+    if (error) {
+      toast.error("Failed to save changes");
+      return;
     }
+    setOrders((prev) =>
+      prev.map((o) => (o.id === selectedOrder.id ? { ...o, ...updates } : o))
+    );
+    toast.success("Order updated");
+    setDialogOpen(false);
   }
 
   if (!ready) return null;
@@ -136,8 +169,10 @@ function AdminOrders() {
           <DialogHeader>
             <DialogTitle className="font-display">Order {selectedOrder?.order_number}</DialogTitle>
           </DialogHeader>
+
           {selectedOrder && (
             <div className="space-y-4">
+              {/* Customer + address summary */}
               <div className="grid grid-cols-2 gap-4 rounded-xl bg-muted/40 p-4 text-sm">
                 <div>
                   <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1">Customer</p>
@@ -153,24 +188,54 @@ function AdminOrders() {
                 </div>
               </div>
 
+              <Separator />
+
+              {/* Order Status */}
               <div className="space-y-1.5">
-                <label className="text-sm font-medium">Update Status</label>
-                <select
-                  id="order-status-select"
-                  defaultValue={selectedOrder.status}
-                  className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-                >
-                  {Object.entries(ORDER_STATUS_LABEL).map(([v, l]) => (
-                    <option key={v} value={v}>{l}</option>
-                  ))}
-                </select>
+                <label className="text-sm font-medium">Order Status</label>
+                <Select value={editStatus} onValueChange={setEditStatus}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Select status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {Object.entries(ORDER_STATUS_LABEL).map(([v, l]) => (
+                      <SelectItem key={v} value={v}>{l}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
 
+              {/* Payment Status */}
+              <div className="space-y-1.5">
+                <label className="text-sm font-medium">Payment Status</label>
+                <Select value={editPaymentStatus} onValueChange={setEditPaymentStatus}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Select payment status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {Object.entries(PAYMENT_STATUS_LABEL).map(([v, l]) => (
+                      <SelectItem key={v} value={v}>{l}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Tracking Code */}
+              <div className="space-y-1.5">
+                <label className="text-sm font-medium">Tracking Code</label>
+                <Input
+                  value={editTrackingCode}
+                  onChange={(e) => setEditTrackingCode(e.target.value)}
+                  placeholder="e.g. DTDC1234567890"
+                />
+              </div>
+
+              {/* Internal Notes */}
               <div className="space-y-1.5">
                 <label className="text-sm font-medium">Internal Notes</label>
                 <textarea
-                  id="order-notes"
-                  defaultValue={selectedOrder.notes ?? ""}
+                  value={editNotes}
+                  onChange={(e) => setEditNotes(e.target.value)}
                   rows={3}
                   className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-ring"
                   placeholder="Add internal notes…"
@@ -178,18 +243,13 @@ function AdminOrders() {
               </div>
             </div>
           )}
+
           <DialogFooter>
-            <Button variant="ghost" onClick={() => setDialogOpen(false)}>Cancel</Button>
-            <Button
-              onClick={() => {
-                const statusEl = document.getElementById("order-status-select") as HTMLSelectElement | null;
-                const notesEl = document.getElementById("order-notes") as HTMLTextAreaElement | null;
-                const status = statusEl?.value;
-                const notes = notesEl?.value ?? "";
-                if (selectedOrder && status) void updateOrder(selectedOrder.id, status, notes);
-              }}
-            >
-              Save Changes
+            <Button variant="ghost" onClick={() => setDialogOpen(false)} disabled={saving}>
+              Cancel
+            </Button>
+            <Button onClick={handleSave} disabled={saving}>
+              {saving ? <><Loader2 className="h-4 w-4 animate-spin mr-2" />Saving…</> : "Save Changes"}
             </Button>
           </DialogFooter>
         </DialogContent>
