@@ -1,5 +1,5 @@
 import { createFileRoute, Link, Outlet, useNavigate } from "@tanstack/react-router";
-import { Package, ShoppingCart, MessageSquare, Mail, Settings, Home, LogOut, Users } from "lucide-react";
+import { Package, ShoppingCart, MessageSquare, Mail, Settings, Home, LogOut, Images, Tag } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useRequireAdmin } from "@/lib/require-auth";
 import { adminLogout } from "@/lib/admin-auth";
@@ -44,6 +44,8 @@ function AdminLayout() {
         <nav className="flex-1 space-y-1 p-4">
           <NavItem to="/admin" icon={<Home className="h-4 w-4" />} label="Dashboard" exact />
           <NavItem to="/admin/products" icon={<Package className="h-4 w-4" />} label="Products" />
+          <NavItem to="/admin/categories" icon={<Tag className="h-4 w-4" />} label="Categories" />
+          <NavItem to="/admin/slider" icon={<Images className="h-4 w-4" />} label="Hero Slider" />
           <NavItem to="/admin/orders" icon={<ShoppingCart className="h-4 w-4" />} label="Orders" />
           <NavItem to="/admin/messages" icon={<MessageSquare className="h-4 w-4" />} label="Messages" />
           <NavItem to="/admin/newsletter" icon={<Mail className="h-4 w-4" />} label="Newsletter" />

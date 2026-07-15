@@ -31,6 +31,8 @@ import { Route as AdminProductsRouteImport } from './routes/admin.products'
 import { Route as AdminOrdersRouteImport } from './routes/admin.orders'
 import { Route as AdminNewsletterRouteImport } from './routes/admin.newsletter'
 import { Route as AdminMessagesRouteImport } from './routes/admin.messages'
+import { Route as AdminSliderRouteImport } from './routes/admin.slider'
+import { Route as AdminCategoriesRouteImport } from './routes/admin.categories'
 
 const WishlistRoute = WishlistRouteImport.update({
   id: '/wishlist',
@@ -143,6 +145,16 @@ const AdminMessagesRoute = AdminMessagesRouteImport.update({
   path: '/messages',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminSliderRoute = AdminSliderRouteImport.update({
+  id: '/slider',
+  path: '/slider',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminCategoriesRoute = AdminCategoriesRouteImport.update({
+  id: '/categories',
+  path: '/categories',
+  getParentRoute: () => AdminRoute,
+} as any)
 
 interface AdminRouteChildren {
   AdminIndexRoute: typeof AdminIndexRoute
@@ -151,6 +163,8 @@ interface AdminRouteChildren {
   AdminOrdersRoute: typeof AdminOrdersRoute
   AdminProductsRoute: typeof AdminProductsRoute
   AdminSettingsRoute: typeof AdminSettingsRoute
+  AdminSliderRoute: typeof AdminSliderRoute
+  AdminCategoriesRoute: typeof AdminCategoriesRoute
 }
 
 const AdminRouteChildren: AdminRouteChildren = {
@@ -160,6 +174,8 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminOrdersRoute: AdminOrdersRoute,
   AdminProductsRoute: AdminProductsRoute,
   AdminSettingsRoute: AdminSettingsRoute,
+  AdminSliderRoute: AdminSliderRoute,
+  AdminCategoriesRoute: AdminCategoriesRoute,
 }
 
 const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
@@ -246,6 +262,8 @@ export interface FileRoutesByFullPath {
   '/admin/orders': typeof AdminOrdersRoute
   '/admin/products': typeof AdminProductsRoute
   '/admin/settings': typeof AdminSettingsRoute
+  '/admin/slider': typeof AdminSliderRoute
+  '/admin/categories': typeof AdminCategoriesRoute
 }
 
 export interface FileRoutesByTo {
@@ -271,6 +289,8 @@ export interface FileRoutesByTo {
   '/admin/orders': typeof AdminOrdersRoute
   '/admin/products': typeof AdminProductsRoute
   '/admin/settings': typeof AdminSettingsRoute
+  '/admin/slider': typeof AdminSliderRoute
+  '/admin/categories': typeof AdminCategoriesRoute
 }
 
 export type FullPaths =
@@ -296,6 +316,8 @@ export type FullPaths =
   | '/admin/orders'
   | '/admin/products'
   | '/admin/settings'
+  | '/admin/slider'
+  | '/admin/categories'
 
 export type To =
   | '/'
@@ -320,6 +342,8 @@ export type To =
   | '/admin/orders'
   | '/admin/products'
   | '/admin/settings'
+  | '/admin/slider'
+  | '/admin/categories'
 
 export type Id =
   | '__root__'
@@ -345,6 +369,8 @@ export type Id =
   | '/admin/orders'
   | '/admin/products'
   | '/admin/settings'
+  | '/admin/slider'
+  | '/admin/categories'
 
 export interface FileRoutesById {
   '__root__': typeof rootRouteImport
@@ -370,4 +396,6 @@ export interface FileRoutesById {
   '/admin/orders': typeof AdminOrdersRoute
   '/admin/products': typeof AdminProductsRoute
   '/admin/settings': typeof AdminSettingsRoute
+  '/admin/slider': typeof AdminSliderRoute
+  '/admin/categories': typeof AdminCategoriesRoute
 }

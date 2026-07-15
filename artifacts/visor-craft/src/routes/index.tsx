@@ -1,12 +1,12 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import {
-  ArrowRight,
   BadgeCheck,
   Truck,
   ShieldCheck,
   Sparkles,
   Mail,
+  ArrowRight,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useState } from "react";
@@ -16,12 +16,18 @@ import { ProductCard } from "@/components/site/product-card";
 import { Rating } from "@/components/site/rating";
 import { ScrollReveal, ScrollRevealItem } from "@/components/site/scroll-reveal";
 import { productsQuery } from "@/lib/products";
+import { slidesQuery } from "@/lib/sliders";
+import { HeroSlider } from "@/components/site/hero-slider";
 import { SITE } from "@/lib/site";
 import { supabase } from "@/integrations/supabase/client";
-import heroImage from "@/assets/hero-visor.jpg";
 
 export const Route = createFileRoute("/")({
-  loader: ({ context }) => context.queryClient.ensureQueryData(productsQuery()),
+  loader: async ({ context }) => {
+    await Promise.all([
+      context.queryClient.ensureQueryData(productsQuery()),
+      context.queryClient.ensureQueryData(slidesQuery()),
+    ]);
+  },
   component: HomePage,
 });
 
@@ -40,67 +46,13 @@ const testimonials = [
 
 function HomePage() {
   const { data: products } = useSuspenseQuery(productsQuery());
+  const { data: slides } = useSuspenseQuery(slidesQuery());
   const featured = products.filter((p) => p.is_featured).slice(0, 4);
 
   return (
     <>
-      {/* Hero */}
-      <section className="relative overflow-hidden bg-hero-gradient text-navy-foreground">
-        <div className="container-page grid gap-10 py-16 md:grid-cols-2 md:items-center md:py-24">
-          <div className="space-y-6">
-            <span className="inline-flex items-center gap-2 rounded-full border border-navy-foreground/20 bg-navy-foreground/5 px-3 py-1 text-xs font-medium uppercase tracking-widest text-navy-foreground/80">
-              <Sparkles className="h-3.5 w-3.5" /> New season · 2026
-            </span>
-            <h1 className="font-display text-4xl font-extrabold leading-[1.05] sm:text-5xl md:text-6xl">
-              Premium helmet visors,{" "}
-              <span className="bg-gradient-to-r from-primary-glow to-white bg-clip-text text-transparent">
-                built for the road.
-              </span>
-            </h1>
-            <p className="max-w-lg text-base text-navy-foreground/75 sm:text-lg">
-              Mirror, tinted and crystal-clear visors. Delivered locally across Delhi by
-              Vishnu Enterprises. Cash on Delivery and UPI supported.
-            </p>
-            <div className="flex flex-wrap gap-3">
-              <Button asChild size="lg" className="shadow-elegant">
-                <Link to="/store">
-                  Shop Now <ArrowRight className="h-4 w-4" />
-                </Link>
-              </Button>
-              <Button
-                asChild
-                size="lg"
-                variant="outline"
-                className="border-navy-foreground/30 bg-transparent text-navy-foreground hover:bg-navy-foreground/10 hover:text-navy-foreground"
-              >
-                <Link to="/track">Track Order</Link>
-              </Button>
-            </div>
-            <dl className="grid max-w-md grid-cols-3 gap-6 pt-4">
-              {[
-                { k: "10K+", v: "Riders served" },
-                { k: "4.7★", v: "Avg. rating" },
-                { k: "48 hr", v: "Local delivery" },
-              ].map((s) => (
-                <div key={s.v}>
-                  <dt className="font-display text-2xl font-bold">{s.k}</dt>
-                  <dd className="text-xs uppercase tracking-wider text-navy-foreground/60">{s.v}</dd>
-                </div>
-              ))}
-            </dl>
-          </div>
-          <div className="relative">
-            <div className="absolute -inset-8 rounded-full bg-primary/30 blur-3xl" aria-hidden />
-            <img
-              src={heroImage}
-              alt="Premium motorcycle helmet with iridescent blue visor"
-              width={1600}
-              height={1100}
-              className="relative w-full rounded-3xl shadow-elegant"
-            />
-          </div>
-        </div>
-      </section>
+      {/* Hero — dynamic slider (falls back to static hero when no slides configured) */}
+      <HeroSlider slides={slides} />
 
       {/* Featured */}
       <section className="container-page py-16 md:py-24">

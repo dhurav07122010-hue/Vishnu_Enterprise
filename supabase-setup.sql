@@ -279,7 +279,37 @@ CREATE POLICY "product_images_anon_upload" ON storage.objects
 CREATE POLICY "product_images_anon_delete" ON storage.objects
   FOR DELETE USING (bucket_id = 'product-images');
 
--- ── 6. SEED CATEGORIES ───────────────────────────────────────
+-- ── 6. SLIDER ITEMS ──────────────────────────────────────────
+
+CREATE TABLE IF NOT EXISTS slider_items (
+  id          uuid    PRIMARY KEY DEFAULT gen_random_uuid(),
+  title       text    NOT NULL,
+  subtitle    text,
+  description text,
+  image_url   text    NOT NULL,
+  button_text text,
+  button_link text,
+  sort_order  int     NOT NULL DEFAULT 0,
+  is_active   boolean NOT NULL DEFAULT true,
+  created_at  timestamptz NOT NULL DEFAULT now(),
+  updated_at  timestamptz NOT NULL DEFAULT now()
+);
+
+ALTER TABLE slider_items ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "slider_public_read" ON slider_items;
+CREATE POLICY "slider_public_read" ON slider_items
+  FOR SELECT USING (true);
+
+-- Allow anon/service-role writes for admin (admin uses service key via RLS bypass or anon key)
+DROP POLICY IF EXISTS "slider_anon_write" ON slider_items;
+CREATE POLICY "slider_anon_write" ON slider_items
+  FOR ALL USING (true) WITH CHECK (true);
+
+-- Add is_visible column to categories if it doesn't exist yet
+ALTER TABLE categories ADD COLUMN IF NOT EXISTS is_visible boolean NOT NULL DEFAULT true;
+
+-- ── 7. SEED CATEGORIES ───────────────────────────────────────
 INSERT INTO categories (name, slug, description, sort_order) VALUES
   ('Mirror',   'mirror',   'Iridescent mirror-finish visors',         1),
   ('Tinted',   'tinted',   'Smoke and tinted visors for bright days',  2),

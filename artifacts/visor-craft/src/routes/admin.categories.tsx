@@ -1,0 +1,375 @@
+import { createFileRoute } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
+import { Badge } from "@/components/ui/badge";
+import {
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
+} from "@/components/ui/dialog";
+import { supabase } from "@/integrations/supabase/client";
+import { useRequireAdmin } from "@/lib/require-auth";
+import { toast } from "sonner";
+import { Plus, Pencil, Trash2, ChevronUp, ChevronDown, Loader2, Tag } from "lucide-react";
+
+export const Route = createFileRoute("/admin/categories")({
+  component: AdminCategories,
+});
+
+function slugify(str: string) {
+  return str.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+}
+
+const defaultForm = {
+  name: "",
+  slug: "",
+  description: "",
+  sort_order: "0",
+  is_visible: true,
+};
+type CatForm = typeof defaultForm;
+
+function AdminCategories() {
+  const ready = useRequireAdmin();
+  const [categories, setCategories] = useState<any[]>([]);
+  const [productCounts, setProductCounts] = useState<Record<string, number>>({});
+  const [loading, setLoading] = useState(true);
+
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [editCat, setEditCat] = useState<any | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<any | null>(null);
+  const [deleteBlocked, setDeleteBlocked] = useState(false);
+
+  const [form, setForm] = useState<CatForm>(defaultForm);
+  const [slugManual, setSlugManual] = useState(false);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => { if (ready) loadAll(); }, [ready]);
+
+  async function loadAll() {
+    setLoading(true);
+    const [{ data: cats }, { data: prods }] = await Promise.all([
+      supabase.from("categories").select("*").order("sort_order", { ascending: true }),
+      supabase.from("products").select("category_id"),
+    ]);
+    setCategories(cats ?? []);
+    // Count products per category
+    const counts: Record<string, number> = {};
+    (prods ?? []).forEach((p: any) => {
+      if (p.category_id) counts[p.category_id] = (counts[p.category_id] ?? 0) + 1;
+    });
+    setProductCounts(counts);
+    setLoading(false);
+  }
+
+  function resetDialog() {
+    setForm(defaultForm);
+    setSlugManual(false);
+  }
+
+  function openAdd() {
+    setEditCat(null);
+    resetDialog();
+    setDialogOpen(true);
+  }
+
+  function openEdit(c: any) {
+    setEditCat(c);
+    setSlugManual(true);
+    setForm({
+      name: c.name ?? "",
+      slug: c.slug ?? "",
+      description: c.description ?? "",
+      sort_order: String(c.sort_order ?? 0),
+      is_visible: c.is_visible !== false,
+    });
+    setDialogOpen(true);
+  }
+
+  function setField(k: keyof CatForm, v: any) {
+    setForm((prev) => {
+      const next = { ...prev, [k]: v };
+      if (k === "name" && !slugManual) next.slug = slugify(v);
+      return next;
+    });
+  }
+
+  async function handleSave() {
+    if (!form.name.trim()) { toast.error("Category name is required"); return; }
+    if (!form.slug.trim()) { toast.error("Slug is required"); return; }
+    setSaving(true);
+
+    const payload: Record<string, any> = {
+      name: form.name.trim(),
+      slug: form.slug.trim(),
+      description: form.description.trim() || null,
+      sort_order: parseInt(form.sort_order) || 0,
+      is_visible: form.is_visible,
+      updated_at: new Date().toISOString(),
+    };
+
+    try {
+      if (editCat) {
+        const { error } = await supabase.from("categories").update(payload).eq("id", editCat.id);
+        if (error) throw error;
+        setCategories((prev) => prev.map((c) => c.id === editCat.id ? { ...c, ...payload } : c));
+        toast.success("Category updated");
+      } else {
+        const { data, error } = await supabase.from("categories").insert(payload).select().single();
+        if (error) throw error;
+        setCategories((prev) => [...prev, data].sort((a, b) => a.sort_order - b.sort_order));
+        toast.success("Category created");
+      }
+      setDialogOpen(false);
+    } catch (err: any) {
+      toast.error(err.message ?? "Failed to save category");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function handleDelete(cat: any) {
+    const count = productCounts[cat.id] ?? 0;
+    if (count > 0) {
+      setDeleteBlocked(true);
+    } else {
+      setDeleteBlocked(false);
+    }
+    setDeleteTarget(cat);
+  }
+
+  async function confirmDelete() {
+    if (!deleteTarget || deleteBlocked) return;
+    const { error } = await supabase.from("categories").delete().eq("id", deleteTarget.id);
+    if (!error) {
+      setCategories((prev) => prev.filter((c) => c.id !== deleteTarget.id));
+      toast.success("Category deleted");
+    } else toast.error(error.message);
+    setDeleteTarget(null);
+  }
+
+  async function moveCategory(id: string, dir: "up" | "down") {
+    const idx = categories.findIndex((c) => c.id === id);
+    const swapIdx = dir === "up" ? idx - 1 : idx + 1;
+    if (swapIdx < 0 || swapIdx >= categories.length) return;
+
+    const updated = [...categories];
+    const aOrder = updated[idx].sort_order;
+    const bOrder = updated[swapIdx].sort_order;
+    const newA = bOrder !== aOrder ? bOrder : dir === "up" ? aOrder - 1 : aOrder + 1;
+    const newB = aOrder;
+
+    await Promise.all([
+      supabase.from("categories").update({ sort_order: newA }).eq("id", updated[idx].id),
+      supabase.from("categories").update({ sort_order: newB }).eq("id", updated[swapIdx].id),
+    ]);
+
+    updated[idx] = { ...updated[idx], sort_order: newA };
+    updated[swapIdx] = { ...updated[swapIdx], sort_order: newB };
+    setCategories(updated.sort((a, b) => a.sort_order - b.sort_order));
+  }
+
+  async function toggleVisible(c: any) {
+    const next = !c.is_visible;
+    const { error } = await supabase.from("categories").update({ is_visible: next }).eq("id", c.id);
+    if (!error) setCategories((prev) => prev.map((x) => x.id === c.id ? { ...x, is_visible: next } : x));
+  }
+
+  if (!ready) return null;
+
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between flex-wrap gap-3">
+        <div>
+          <h1 className="font-display text-3xl font-bold">Product Categories</h1>
+          <p className="text-muted-foreground text-sm mt-0.5">{categories.length} categories · shown in store navigation</p>
+        </div>
+        <Button onClick={openAdd} className="shadow-elegant">
+          <Plus className="mr-2 h-4 w-4" /> Add Category
+        </Button>
+      </div>
+
+      {/* Category list */}
+      {loading ? (
+        <div className="flex items-center justify-center py-20 text-muted-foreground">
+          <div className="h-7 w-7 animate-spin rounded-full border-2 border-primary border-t-transparent mr-3" />
+          Loading categories…
+        </div>
+      ) : categories.length === 0 ? (
+        <div className="flex flex-col items-center justify-center rounded-2xl border-2 border-dashed py-20">
+          <Tag className="h-12 w-12 text-muted-foreground/30 mb-4" />
+          <p className="font-medium text-muted-foreground">No categories yet</p>
+          <Button onClick={openAdd} variant="outline" className="mt-4">
+            <Plus className="mr-2 h-4 w-4" /> Add first category
+          </Button>
+        </div>
+      ) : (
+        <div className="rounded-2xl border overflow-hidden bg-card">
+          <table className="w-full text-sm">
+            <thead className="border-b bg-muted/40">
+              <tr>
+                <th className="px-4 py-3 text-left font-medium text-muted-foreground">Category</th>
+                <th className="px-4 py-3 text-left font-medium text-muted-foreground hidden sm:table-cell">Slug</th>
+                <th className="px-4 py-3 text-center font-medium text-muted-foreground">Products</th>
+                <th className="px-4 py-3 text-center font-medium text-muted-foreground">Order</th>
+                <th className="px-4 py-3 text-center font-medium text-muted-foreground">Visible</th>
+                <th className="px-4 py-3 text-right font-medium text-muted-foreground">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y">
+              {categories.map((cat, idx) => (
+                <tr key={cat.id} className="hover:bg-muted/20 transition-colors">
+                  <td className="px-4 py-3">
+                    <div className="flex items-center gap-2">
+                      <div className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-primary/10">
+                        <Tag className="h-4 w-4 text-primary" />
+                      </div>
+                      <div>
+                        <p className="font-medium">{cat.name}</p>
+                        {cat.description && <p className="text-xs text-muted-foreground">{cat.description}</p>}
+                      </div>
+                    </div>
+                  </td>
+                  <td className="px-4 py-3 hidden sm:table-cell">
+                    <span className="font-mono text-xs text-muted-foreground">{cat.slug}</span>
+                  </td>
+                  <td className="px-4 py-3 text-center">
+                    <Badge variant="secondary">{productCounts[cat.id] ?? 0}</Badge>
+                  </td>
+                  <td className="px-4 py-3">
+                    <div className="flex items-center justify-center gap-1">
+                      <button
+                        onClick={() => moveCategory(cat.id, "up")}
+                        disabled={idx === 0}
+                        className="grid h-7 w-7 place-items-center rounded-md border bg-background text-muted-foreground hover:text-foreground disabled:opacity-30 disabled:cursor-not-allowed transition"
+                        aria-label="Move up"
+                      >
+                        <ChevronUp className="h-4 w-4" />
+                      </button>
+                      <button
+                        onClick={() => moveCategory(cat.id, "down")}
+                        disabled={idx === categories.length - 1}
+                        className="grid h-7 w-7 place-items-center rounded-md border bg-background text-muted-foreground hover:text-foreground disabled:opacity-30 disabled:cursor-not-allowed transition"
+                        aria-label="Move down"
+                      >
+                        <ChevronDown className="h-4 w-4" />
+                      </button>
+                    </div>
+                  </td>
+                  <td className="px-4 py-3 text-center">
+                    <Switch checked={cat.is_visible !== false} onCheckedChange={() => toggleVisible(cat)} />
+                  </td>
+                  <td className="px-4 py-3 text-right">
+                    <div className="flex items-center justify-end gap-1">
+                      <Button variant="ghost" size="icon" onClick={() => openEdit(cat)} className="h-8 w-8">
+                        <Pencil className="h-3.5 w-3.5" />
+                      </Button>
+                      <Button
+                        variant="ghost" size="icon"
+                        onClick={() => handleDelete(cat)}
+                        className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </Button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {/* Add / Edit Dialog */}
+      <Dialog open={dialogOpen} onOpenChange={(o) => { if (!o) resetDialog(); setDialogOpen(o); }}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="font-display text-xl">
+              {editCat ? "Edit Category" : "Add Category"}
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-4 py-2">
+            <div className="space-y-1.5">
+              <Label>Name <span className="text-destructive">*</span></Label>
+              <Input
+                value={form.name}
+                onChange={(e) => setField("name", e.target.value)}
+                placeholder="e.g. Visors"
+                autoFocus
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <Label>URL Slug <span className="text-xs text-muted-foreground font-normal">(auto-generated)</span></Label>
+              <Input
+                value={form.slug}
+                onChange={(e) => { setSlugManual(true); setField("slug", e.target.value); }}
+                placeholder="e.g. visors"
+                className="font-mono text-sm"
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <Label>Description <span className="text-xs text-muted-foreground font-normal">(optional)</span></Label>
+              <Input
+                value={form.description}
+                onChange={(e) => setField("description", e.target.value)}
+                placeholder="Short description shown in the store"
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-3 items-end">
+              <div className="space-y-1.5">
+                <Label>Sort Order</Label>
+                <Input
+                  type="number"
+                  value={form.sort_order}
+                  onChange={(e) => setField("sort_order", e.target.value)}
+                />
+              </div>
+              <label className="flex items-center justify-between p-3 rounded-xl border cursor-pointer hover:bg-muted/40">
+                <span className="text-sm font-medium">Visible in store</span>
+                <Switch checked={form.is_visible} onCheckedChange={(v) => setField("is_visible", v)} />
+              </label>
+            </div>
+          </div>
+
+          <DialogFooter className="gap-2">
+            <Button variant="ghost" onClick={() => setDialogOpen(false)} disabled={saving}>Cancel</Button>
+            <Button onClick={handleSave} disabled={saving} className="min-w-28">
+              {saving ? <><Loader2 className="h-4 w-4 animate-spin mr-2" />Saving…</> : editCat ? "Save Changes" : "Create Category"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete dialog */}
+      <Dialog open={!!deleteTarget} onOpenChange={(o) => { if (!o) setDeleteTarget(null); }}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader><DialogTitle>Delete category?</DialogTitle></DialogHeader>
+          {deleteBlocked ? (
+            <p className="text-sm text-muted-foreground">
+              <strong>{deleteTarget?.name}</strong> has {productCounts[deleteTarget?.id] ?? 0} products assigned to it.
+              Reassign or delete those products first.
+            </p>
+          ) : (
+            <p className="text-sm text-muted-foreground">
+              "<strong>{deleteTarget?.name}</strong>" will be permanently removed. This cannot be undone.
+            </p>
+          )}
+          <DialogFooter className="gap-2">
+            <Button variant="ghost" onClick={() => setDeleteTarget(null)}>
+              {deleteBlocked ? "Close" : "Cancel"}
+            </Button>
+            {!deleteBlocked && (
+              <Button variant="destructive" onClick={confirmDelete}>Delete</Button>
+            )}
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}

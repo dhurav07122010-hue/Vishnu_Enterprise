@@ -59,14 +59,53 @@ function StorePage() {
     });
   }, [products, query, cat, price]);
 
+  // visible categories (respect is_visible flag if present, default true)
+  const visibleCategories = categories.filter((c) => c.is_visible !== false);
+
   return (
     <div className="container-page py-10 md:py-14">
-      <header className="mb-8">
-        <h1 className="font-display text-3xl font-bold sm:text-4xl">All visors</h1>
+      <header className="mb-6">
+        <h1 className="font-display text-3xl font-bold sm:text-4xl">Shop</h1>
         <p className="mt-2 text-muted-foreground">
           {filtered.length} of {products.length} products
         </p>
       </header>
+
+      {/* Category tab bar */}
+      {visibleCategories.length > 0 && (
+        <div className="mb-6 flex gap-2 overflow-x-auto pb-1 scrollbar-none">
+          <button
+            onClick={() => setCat(null)}
+            className={cn(
+              "shrink-0 rounded-full px-4 py-2 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+              !cat
+                ? "bg-primary text-primary-foreground shadow-elegant"
+                : "border bg-card text-foreground hover:bg-accent",
+            )}
+          >
+            All Products
+            <span className="ml-1.5 text-xs opacity-70">({products.length})</span>
+          </button>
+          {visibleCategories.map((c) => {
+            const count = products.filter((p) => p.category_id === c.id).length;
+            return (
+              <button
+                key={c.id}
+                onClick={() => setCat(c.id)}
+                className={cn(
+                  "shrink-0 rounded-full px-4 py-2 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                  cat === c.id
+                    ? "bg-primary text-primary-foreground shadow-elegant"
+                    : "border bg-card text-foreground hover:bg-accent",
+                )}
+              >
+                {c.name}
+                <span className="ml-1.5 text-xs opacity-70">({count})</span>
+              </button>
+            );
+          })}
+        </div>
+      )}
 
       <div className="grid gap-8 lg:grid-cols-[260px_1fr]">
         <aside
