@@ -103,20 +103,6 @@ export function Navbar() {
           </span>
         </Link>
 
-        <nav className="ml-4 hidden items-center gap-1 md:flex">
-          {links.map((l) => (
-            <Link
-              key={l.to}
-              to={l.to}
-              className="rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
-              activeProps={{ className: "text-primary bg-accent" }}
-              activeOptions={{ exact: l.to === "/" }}
-            >
-              {l.label}
-            </Link>
-          ))}
-        </nav>
-
         <div className="ml-auto flex items-center gap-1">
           {user && (
             <Button asChild variant="ghost" className="hidden sm:inline-flex">
@@ -184,11 +170,10 @@ export function Navbar() {
             <Link to="/store">Shop Now</Link>
           </Button>
 
-          {/* Mobile menu toggle */}
+          {/* Menu toggle */}
           <Button
             variant="ghost"
             size="icon"
-            className="md:hidden"
             onClick={() => setOpen((v) => !v)}
             aria-label={open ? "Close menu" : "Open menu"}
           >
@@ -197,8 +182,8 @@ export function Navbar() {
         </div>
       </div>
 
-      {/* Mobile menu */}
-      <div className={cn("md:hidden border-t border-border/60 bg-background", open ? "block" : "hidden")}>
+      {/* Nav menu (Home / Store / Track Order / Contact + account links) */}
+      <div className={cn("border-t border-border/60 bg-background", open ? "block" : "hidden")}>
         <nav className="container-page flex flex-col py-3">
           {/* Signed-in user info */}
           {user && (
