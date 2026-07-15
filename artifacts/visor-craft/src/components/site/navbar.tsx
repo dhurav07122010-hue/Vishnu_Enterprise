@@ -14,7 +14,7 @@ import { allCategoriesQuery } from "@/lib/products";
 
 const links = [
   { to: "/", label: "Home" },
-  { to: "/store", label: "Store" },
+  { to: "/store", label: "Shop" },
   { to: "/track", label: "Track Order" },
   { to: "/contact", label: "Contact" },
 ] as const;

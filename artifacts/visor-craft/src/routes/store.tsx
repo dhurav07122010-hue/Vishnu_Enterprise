@@ -159,7 +159,7 @@ function StorePage() {
         {/* Breadcrumb */}
         <nav className="mb-6 flex items-center gap-1.5 text-sm text-muted-foreground">
           <button onClick={() => navigate({ search: {} })} className="hover:text-foreground transition-colors">
-            Store
+            Shop
           </button>
           <ChevronRight className="h-3.5 w-3.5" />
           <span className="text-foreground font-medium">{selectedMain?.name ?? "Category"}</span>
@@ -234,7 +234,7 @@ function StorePage() {
       {/* Breadcrumb */}
       <nav className="mb-6 flex items-center gap-1.5 text-sm text-muted-foreground flex-wrap">
         <button onClick={() => navigate({ search: {} })} className="hover:text-foreground transition-colors">
-          Store
+          Shop
         </button>
         <ChevronRight className="h-3.5 w-3.5" />
         <button
