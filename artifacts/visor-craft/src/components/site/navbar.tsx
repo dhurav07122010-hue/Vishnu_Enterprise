@@ -219,14 +219,14 @@ export function Navbar() {
                 {l.label}
               </Link>
               {l.to === "/store" && mainCategories.length > 0 && (
-                <div className="grid grid-cols-2 gap-2 px-3 pb-3 pt-1">
+                <div className="flex flex-col gap-1 px-3 pb-3 pt-1">
                   {mainCategories.map((cat) => (
                     <Link
                       key={cat.id}
                       to="/store"
                       search={{ main: cat.id, sub: undefined }}
                       onClick={() => setOpen(false)}
-                      className="truncate rounded-lg border border-border/60 px-3 py-2 text-center text-xs font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+                      className="truncate rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
                     >
                       {cat.name}
                     </Link>
