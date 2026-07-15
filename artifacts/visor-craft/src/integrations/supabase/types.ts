@@ -449,16 +449,52 @@ export type Database = {
           id: string
           logo_url: string | null
           updated_at: string
+          name: string | null
+          tagline: string | null
+          description: string | null
+          meta_title: string | null
+          meta_description: string | null
+          meta_keywords: string | null
+          email: string | null
+          phone: string | null
+          whatsapp: string | null
+          address_line1: string | null
+          address_line2: string | null
+          hours: string | null
         }
         Insert: {
           id?: string
           logo_url?: string | null
           updated_at?: string
+          name?: string | null
+          tagline?: string | null
+          description?: string | null
+          meta_title?: string | null
+          meta_description?: string | null
+          meta_keywords?: string | null
+          email?: string | null
+          phone?: string | null
+          whatsapp?: string | null
+          address_line1?: string | null
+          address_line2?: string | null
+          hours?: string | null
         }
         Update: {
           id?: string
           logo_url?: string | null
           updated_at?: string
+          name?: string | null
+          tagline?: string | null
+          description?: string | null
+          meta_title?: string | null
+          meta_description?: string | null
+          meta_keywords?: string | null
+          email?: string | null
+          phone?: string | null
+          whatsapp?: string | null
+          address_line1?: string | null
+          address_line2?: string | null
+          hours?: string | null
         }
         Relationships: []
       }

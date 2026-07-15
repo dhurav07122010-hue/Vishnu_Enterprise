@@ -340,5 +340,19 @@ DROP POLICY IF EXISTS "site_settings_anon_write" ON site_settings;
 CREATE POLICY "site_settings_anon_write" ON site_settings
   FOR ALL USING (true) WITH CHECK (true);
 
+-- Editable storefront info + SEO tags (Admin → Settings)
+ALTER TABLE site_settings ADD COLUMN IF NOT EXISTS name              text;
+ALTER TABLE site_settings ADD COLUMN IF NOT EXISTS tagline           text;
+ALTER TABLE site_settings ADD COLUMN IF NOT EXISTS description       text;
+ALTER TABLE site_settings ADD COLUMN IF NOT EXISTS meta_title        text;
+ALTER TABLE site_settings ADD COLUMN IF NOT EXISTS meta_description  text;
+ALTER TABLE site_settings ADD COLUMN IF NOT EXISTS meta_keywords     text;
+ALTER TABLE site_settings ADD COLUMN IF NOT EXISTS email             text;
+ALTER TABLE site_settings ADD COLUMN IF NOT EXISTS phone             text;
+ALTER TABLE site_settings ADD COLUMN IF NOT EXISTS whatsapp          text;
+ALTER TABLE site_settings ADD COLUMN IF NOT EXISTS address_line1     text;
+ALTER TABLE site_settings ADD COLUMN IF NOT EXISTS address_line2     text;
+ALTER TABLE site_settings ADD COLUMN IF NOT EXISTS hours             text;
+
 INSERT INTO site_settings (id) VALUES ('default')
 ON CONFLICT (id) DO NOTHING;

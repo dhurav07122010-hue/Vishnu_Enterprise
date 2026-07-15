@@ -8,7 +8,8 @@ import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { orderQuery, ORDER_STATUS_LABEL, ORDER_STATUS_STEPS, PAYMENT_LABEL, PAYMENT_STATUS_LABEL } from "@/lib/orders";
-import { formatPrice, SITE } from "@/lib/site";
+import { formatPrice } from "@/lib/site";
+import { useSiteInfo } from "@/lib/site-settings";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 
@@ -41,11 +42,12 @@ function OrderPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [uploading, setUploading] = useState(false);
+  const site = useSiteInfo();
 
   const message = encodeURIComponent(
-    `Hi Vishnu Enterprises! I just placed order ${order.order_number}. Please confirm.`,
+    `Hi ${site.name}! I just placed order ${order.order_number}. Please confirm.`,
   );
-  const waLink = `https://wa.me/${SITE.whatsapp}?text=${message}`;
+  const waLink = `https://wa.me/${site.whatsapp}?text=${message}`;
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];

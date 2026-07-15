@@ -20,6 +20,31 @@ import { slidesQuery } from "@/lib/sliders";
 import { HeroSlider } from "@/components/site/hero-slider";
 import { SITE } from "@/lib/site";
 import { supabase } from "@/integrations/supabase/client";
+import { useEffect } from "react";
+import { useSiteInfo } from "@/lib/site-settings";
+
+/** Best-effort client-side sync of the browser tab title/description from Admin → Settings.
+ * Only applied on the homepage, which has no route-level `head()` override of its own. */
+function useHomeMetaSync() {
+  const site = useSiteInfo();
+
+  useEffect(() => {
+    document.title = site.metaTitle;
+
+    const setMeta = (name: string, content: string) => {
+      let tag = document.querySelector(`meta[name="${name}"]`);
+      if (!tag) {
+        tag = document.createElement("meta");
+        tag.setAttribute("name", name);
+        document.head.appendChild(tag);
+      }
+      tag.setAttribute("content", content);
+    };
+
+    setMeta("description", site.metaDescription);
+    if (site.metaKeywords) setMeta("keywords", site.metaKeywords);
+  }, [site.metaTitle, site.metaDescription, site.metaKeywords]);
+}
 
 export const Route = createFileRoute("/")({
   loader: async ({ context }) => {
@@ -48,6 +73,8 @@ function HomePage() {
   const { data: products } = useSuspenseQuery(productsQuery());
   const { data: slides } = useSuspenseQuery(slidesQuery());
   const featured = products.filter((p) => p.is_featured).slice(0, 4);
+  const site = useSiteInfo();
+  useHomeMetaSync();
 
   return (
     <>
@@ -83,7 +110,7 @@ function HomePage() {
         <div className="container-page">
           <ScrollReveal className="mx-auto mb-12 max-w-2xl text-center">
             <p className="text-xs font-semibold uppercase tracking-[0.25em] text-primary">
-              Why {SITE.name}
+              Why {site.name}
             </p>
             <h2 className="mt-2 font-display text-3xl font-bold text-foreground sm:text-4xl">
               A visor you can trust, at a price that makes sense.

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { ArrowUp } from "lucide-react";
-import { SITE } from "@/lib/site";
+import { useSiteInfo } from "@/lib/site-settings";
 import { cn } from "@/lib/utils";
 import { useRouterState } from "@tanstack/react-router";
 
@@ -8,6 +8,7 @@ export function FloatingActions() {
   const [show, setShow] = useState(false);
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const isAdmin = pathname.startsWith("/admin");
+  const site = useSiteInfo();
 
   useEffect(() => {
     const onScroll = () => setShow(window.scrollY > 360);
@@ -21,7 +22,7 @@ export function FloatingActions() {
       {/* WhatsApp — hidden on admin, green circle on store */}
       {!isAdmin && (
         <a
-          href={`https://wa.me/${SITE.whatsapp}?text=${encodeURIComponent("Hello Vishnu Enterprises, I have a question about your visors.")}`}
+          href={`https://wa.me/${site.whatsapp}?text=${encodeURIComponent(`Hello ${site.name}, I have a question about your visors.`)}`}
           target="_blank"
           rel="noopener noreferrer"
           aria-label="Chat with us on WhatsApp"

@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { SITE } from "@/lib/site";
+import { useSiteInfo } from "@/lib/site-settings";
 
 export const Route = createFileRoute("/track")({
   head: () => ({
@@ -21,6 +21,7 @@ export const Route = createFileRoute("/track")({
 function TrackPage() {
   const [orderNumber, setOrderNumber] = useState("");
   const navigate = useNavigate();
+  const site = useSiteInfo();
 
   function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -63,8 +64,8 @@ function TrackPage() {
 
         <p className="mt-6 text-center text-xs text-muted-foreground">
           Lost your order number? WhatsApp us at{" "}
-          <a href={`https://wa.me/${SITE.whatsapp}`} className="font-medium text-primary hover:underline">
-            {SITE.phone}
+          <a href={`https://wa.me/${site.whatsapp}`} className="font-medium text-primary hover:underline">
+            {site.phone}
           </a>
         </p>
       </div>

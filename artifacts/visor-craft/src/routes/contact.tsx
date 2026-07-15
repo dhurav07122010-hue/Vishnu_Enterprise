@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
-import { SITE } from "@/lib/site";
+import { useSiteInfo } from "@/lib/site-settings";
 
 export const Route = createFileRoute("/contact")({
   head: () => ({
@@ -37,6 +37,7 @@ const schema = z.object({
 function ContactPage() {
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({ name: "", email: "", phone: "", subject: "", message: "" });
+  const site = useSiteInfo();
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -62,7 +63,7 @@ function ContactPage() {
     setForm({ name: "", email: "", phone: "", subject: "", message: "" });
   }
 
-  const mapQuery = encodeURIComponent(`${SITE.address.line1}, ${SITE.address.line2}, ${SITE.address.country}`);
+  const mapQuery = encodeURIComponent(`${site.addressLine1}, ${site.addressLine2}`);
 
   return (
     <div className="container-page py-12 md:py-16">
@@ -113,7 +114,7 @@ function ContactPage() {
                 </span>
                 <div>
                   <p className="font-semibold">Visit us</p>
-                  <p className="text-muted-foreground">{SITE.address.line1}, {SITE.address.line2}, {SITE.address.country}</p>
+                  <p className="text-muted-foreground">{site.addressLine1}, {site.addressLine2}</p>
                 </div>
               </li>
               <li className="flex items-start gap-3">
@@ -122,7 +123,7 @@ function ContactPage() {
                 </span>
                 <div>
                   <p className="font-semibold">Call / WhatsApp</p>
-                  <a href={`tel:${SITE.phone.replace(/\s+/g, "")}`} className="text-muted-foreground hover:text-primary">{SITE.phone}</a>
+                  <a href={`tel:${site.phone.replace(/\s+/g, "")}`} className="text-muted-foreground hover:text-primary">{site.phone}</a>
                 </div>
               </li>
               <li className="flex items-start gap-3">
@@ -131,7 +132,7 @@ function ContactPage() {
                 </span>
                 <div>
                   <p className="font-semibold">Email</p>
-                  <a href={`mailto:${SITE.email}`} className="break-all text-muted-foreground hover:text-primary">{SITE.email}</a>
+                  <a href={`mailto:${site.email}`} className="break-all text-muted-foreground hover:text-primary">{site.email}</a>
                 </div>
               </li>
               <li className="flex items-start gap-3">
@@ -140,7 +141,7 @@ function ContactPage() {
                 </span>
                 <div>
                   <p className="font-semibold">Business hours</p>
-                  <p className="text-muted-foreground">{SITE.hours}</p>
+                  <p className="text-muted-foreground">{site.hours}</p>
                 </div>
               </li>
             </ul>

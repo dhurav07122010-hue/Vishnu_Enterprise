@@ -1,16 +1,38 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
 import { useRequireAdmin } from "@/lib/require-auth";
 import { adminLogout } from "@/lib/admin-auth";
 import { useNavigate } from "@tanstack/react-router";
 import { SITE } from "@/lib/site";
-import { siteSettingsQuery, uploadSiteLogo, saveSiteLogoUrl } from "@/lib/site-settings";
+import {
+  siteSettingsQuery,
+  uploadSiteLogo,
+  saveSiteLogoUrl,
+  saveSiteSettings,
+  type EditableSiteSettings,
+} from "@/lib/site-settings";
 import { toast } from "sonner";
-import { MapPin, Phone, Mail, Clock, CreditCard, LogOut, Shield, Store, ImagePlus, X } from "lucide-react";
+import {
+  MapPin,
+  Phone,
+  Mail,
+  Clock,
+  CreditCard,
+  LogOut,
+  Shield,
+  Store,
+  ImagePlus,
+  X,
+  Tags,
+  Save,
+} from "lucide-react";
 
 export const Route = createFileRoute("/admin/settings")({
   component: AdminSettings,
@@ -92,9 +114,228 @@ function LogoSettingsCard() {
   );
 }
 
+/** Editable form fields, prefilled from the DB (Admin → Settings) with SITE constants as fallback defaults. */
+function useSettingsForm() {
+  const { data: siteSettings } = useQuery(siteSettingsQuery());
+  const [form, setForm] = useState<EditableSiteSettings>({
+    name: SITE.name,
+    tagline: SITE.tagline,
+    description: SITE.description,
+    meta_title: SITE.name,
+    meta_description: SITE.description,
+    meta_keywords: "",
+    email: SITE.email,
+    phone: SITE.phone,
+    whatsapp: SITE.whatsapp,
+    address_line1: SITE.address.line1,
+    address_line2: SITE.address.line2,
+    hours: SITE.hours,
+  });
+  const [loadedFromDb, setLoadedFromDb] = useState(false);
+
+  useEffect(() => {
+    if (!siteSettings || loadedFromDb) return;
+    setForm({
+      name: siteSettings.name || SITE.name,
+      tagline: siteSettings.tagline || SITE.tagline,
+      description: siteSettings.description || SITE.description,
+      meta_title: siteSettings.meta_title || SITE.name,
+      meta_description: siteSettings.meta_description || SITE.description,
+      meta_keywords: siteSettings.meta_keywords || "",
+      email: siteSettings.email || SITE.email,
+      phone: siteSettings.phone || SITE.phone,
+      whatsapp: siteSettings.whatsapp || SITE.whatsapp,
+      address_line1: siteSettings.address_line1 || SITE.address.line1,
+      address_line2: siteSettings.address_line2 || SITE.address.line2,
+      hours: siteSettings.hours || SITE.hours,
+    });
+    setLoadedFromDb(true);
+  }, [siteSettings, loadedFromDb]);
+
+  function update<K extends keyof EditableSiteSettings>(key: K, value: EditableSiteSettings[K]) {
+    setForm((f) => ({ ...f, [key]: value }));
+  }
+
+  return { form, update };
+}
+
+function StoreInfoCard({
+  form,
+  update,
+}: {
+  form: EditableSiteSettings;
+  update: <K extends keyof EditableSiteSettings>(key: K, value: EditableSiteSettings[K]) => void;
+}) {
+  const queryClient = useQueryClient();
+  const [saving, setSaving] = useState(false);
+
+  async function handleSave() {
+    setSaving(true);
+    try {
+      await saveSiteSettings({
+        name: form.name,
+        tagline: form.tagline,
+        description: form.description,
+        email: form.email,
+        phone: form.phone,
+        whatsapp: form.whatsapp,
+        address_line1: form.address_line1,
+        address_line2: form.address_line2,
+        hours: form.hours,
+      });
+      await queryClient.invalidateQueries({ queryKey: ["site-settings"] });
+      toast.success("Store information updated");
+    } catch (err: any) {
+      toast.error(err.message ?? "Failed to save");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <Card>
+      <CardHeader className="pb-3">
+        <CardTitle className="flex items-center gap-2 text-base"><Store className="h-4 w-4 text-primary" /> Store Information</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4 text-sm">
+        <div className="space-y-1.5">
+          <Label htmlFor="s-name">Store name</Label>
+          <Input id="s-name" value={form.name ?? ""} onChange={(e) => update("name", e.target.value)} maxLength={100} />
+        </div>
+        <div className="space-y-1.5">
+          <Label htmlFor="s-tagline">Tagline</Label>
+          <Input id="s-tagline" value={form.tagline ?? ""} onChange={(e) => update("tagline", e.target.value)} maxLength={150} />
+        </div>
+        <div className="space-y-1.5">
+          <Label htmlFor="s-description">Description</Label>
+          <Textarea
+            id="s-description"
+            value={form.description ?? ""}
+            onChange={(e) => update("description", e.target.value)}
+            maxLength={500}
+            rows={3}
+          />
+        </div>
+
+        <div className="h-px bg-border" />
+
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div className="space-y-1.5">
+            <Label htmlFor="s-addr1" className="flex items-center gap-1.5"><MapPin className="h-3.5 w-3.5 text-muted-foreground" /> Address line 1</Label>
+            <Input id="s-addr1" value={form.address_line1 ?? ""} onChange={(e) => update("address_line1", e.target.value)} maxLength={150} />
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="s-addr2">Address line 2</Label>
+            <Input id="s-addr2" value={form.address_line2 ?? ""} onChange={(e) => update("address_line2", e.target.value)} maxLength={150} />
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="s-phone" className="flex items-center gap-1.5"><Phone className="h-3.5 w-3.5 text-muted-foreground" /> Phone</Label>
+            <Input id="s-phone" value={form.phone ?? ""} onChange={(e) => update("phone", e.target.value)} maxLength={20} />
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="s-whatsapp">WhatsApp number</Label>
+            <Input
+              id="s-whatsapp"
+              value={form.whatsapp ?? ""}
+              onChange={(e) => update("whatsapp", e.target.value)}
+              maxLength={20}
+              placeholder="Digits only, e.g. 917982694772"
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="s-email" className="flex items-center gap-1.5"><Mail className="h-3.5 w-3.5 text-muted-foreground" /> Email</Label>
+            <Input id="s-email" type="email" value={form.email ?? ""} onChange={(e) => update("email", e.target.value)} maxLength={200} />
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="s-hours" className="flex items-center gap-1.5"><Clock className="h-3.5 w-3.5 text-muted-foreground" /> Business hours</Label>
+            <Input id="s-hours" value={form.hours ?? ""} onChange={(e) => update("hours", e.target.value)} maxLength={100} />
+          </div>
+        </div>
+
+        <Button onClick={handleSave} disabled={saving} className="mt-2">
+          <Save className="h-4 w-4" />
+          {saving ? "Saving…" : "Save store info"}
+        </Button>
+      </CardContent>
+    </Card>
+  );
+}
+
+function SeoCard({
+  form,
+  update,
+}: {
+  form: EditableSiteSettings;
+  update: <K extends keyof EditableSiteSettings>(key: K, value: EditableSiteSettings[K]) => void;
+}) {
+  const queryClient = useQueryClient();
+  const [saving, setSaving] = useState(false);
+
+  async function handleSave() {
+    setSaving(true);
+    try {
+      await saveSiteSettings({
+        meta_title: form.meta_title,
+        meta_description: form.meta_description,
+        meta_keywords: form.meta_keywords,
+      });
+      await queryClient.invalidateQueries({ queryKey: ["site-settings"] });
+      toast.success("Website tags updated");
+    } catch (err: any) {
+      toast.error(err.message ?? "Failed to save");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <Card>
+      <CardHeader className="pb-3">
+        <CardTitle className="flex items-center gap-2 text-base"><Tags className="h-4 w-4 text-primary" /> Website Tags (SEO)</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4 text-sm">
+        <p className="text-xs text-muted-foreground">
+          Shown in the browser tab, search results, and link previews on social media.
+        </p>
+        <div className="space-y-1.5">
+          <Label htmlFor="s-meta-title">Page title</Label>
+          <Input id="s-meta-title" value={form.meta_title ?? ""} onChange={(e) => update("meta_title", e.target.value)} maxLength={70} />
+        </div>
+        <div className="space-y-1.5">
+          <Label htmlFor="s-meta-description">Meta description</Label>
+          <Textarea
+            id="s-meta-description"
+            value={form.meta_description ?? ""}
+            onChange={(e) => update("meta_description", e.target.value)}
+            maxLength={300}
+            rows={3}
+          />
+        </div>
+        <div className="space-y-1.5">
+          <Label htmlFor="s-meta-keywords">Keywords</Label>
+          <Input
+            id="s-meta-keywords"
+            value={form.meta_keywords ?? ""}
+            onChange={(e) => update("meta_keywords", e.target.value)}
+            maxLength={300}
+            placeholder="helmet visors, mirror visor, Delhi"
+          />
+          <p className="text-xs text-muted-foreground">Comma-separated.</p>
+        </div>
+
+        <Button onClick={handleSave} disabled={saving} className="mt-2">
+          <Save className="h-4 w-4" />
+          {saving ? "Saving…" : "Save website tags"}
+        </Button>
+      </CardContent>
+    </Card>
+  );
+}
+
 function AdminSettings() {
   const ready = useRequireAdmin();
   const navigate = useNavigate();
+  const { form, update } = useSettingsForm();
 
   if (!ready) return null;
 
@@ -112,39 +353,9 @@ function AdminSettings() {
 
       <LogoSettingsCard />
 
-      {/* Store info */}
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="flex items-center gap-2 text-base"><Store className="h-4 w-4 text-primary" /> Store Information</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3 text-sm">
-          <Row label="Store Name" value={SITE.name} />
-          <Row label="Tagline" value={SITE.tagline} />
-          <Row label="Description" value={SITE.description} />
+      <StoreInfoCard form={form} update={update} />
 
-          <div className="h-px bg-border" />
-
-          <div className="flex items-start gap-2">
-            <MapPin className="h-4 w-4 mt-0.5 text-muted-foreground shrink-0" />
-            <div>
-              <p>{SITE.address.line1}</p>
-              <p>{SITE.address.line2}</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <Phone className="h-4 w-4 text-muted-foreground" />
-            <a href={`tel:${SITE.phone.replace(/\s/g, "")}`} className="hover:text-primary transition-colors">{SITE.phone}</a>
-          </div>
-          <div className="flex items-center gap-2">
-            <Mail className="h-4 w-4 text-muted-foreground" />
-            <a href={`mailto:${SITE.email}`} className="hover:text-primary transition-colors">{SITE.email}</a>
-          </div>
-          <div className="flex items-center gap-2">
-            <Clock className="h-4 w-4 text-muted-foreground" />
-            <span>{SITE.hours}</span>
-          </div>
-        </CardContent>
-      </Card>
+      <SeoCard form={form} update={update} />
 
       {/* Payments */}
       <Card>

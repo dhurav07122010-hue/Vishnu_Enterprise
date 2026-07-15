@@ -8,7 +8,8 @@ import { Badge } from "@/components/ui/badge";
 import { Rating } from "@/components/site/rating";
 import { ProductCard } from "@/components/site/product-card";
 import { productsQuery, reviewsQuery } from "@/lib/products";
-import { formatPrice, SITE } from "@/lib/site";
+import { formatPrice } from "@/lib/site";
+import { useSiteInfo } from "@/lib/site-settings";
 import { resolveProductImage } from "@/lib/product-images";
 import { cart } from "@/lib/cart";
 import { wishlist, useIsInWishlist } from "@/lib/wishlist";
@@ -57,6 +58,7 @@ function ProductPage() {
   const product = products.find((p) => p.slug === slug)!;
   const { data: reviews } = useSuspenseQuery(reviewsQuery(product.id));
   const isWishlisted = useIsInWishlist(product.id);
+  const site = useSiteInfo();
 
   const jsonLd = {
     "@context": "https://schema.org",
@@ -66,7 +68,7 @@ function ProductPage() {
     "image": [resolveProductImage(product.primary_image_url)],
     "brand": {
       "@type": "Organization",
-      "name": SITE.name
+      "name": site.name
     },
     "offers": {
       "@type": "Offer",

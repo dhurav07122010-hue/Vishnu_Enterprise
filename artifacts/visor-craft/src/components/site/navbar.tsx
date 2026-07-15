@@ -4,12 +4,11 @@ import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useTheme } from "next-themes";
 import { Button } from "@/components/ui/button";
-import { SITE } from "@/lib/site";
 import { cn } from "@/lib/utils";
 import { useCartCount } from "@/lib/cart";
 import { useWishlistCount } from "@/lib/wishlist";
 import { useAuth } from "@/lib/auth";
-import { siteSettingsQuery } from "@/lib/site-settings";
+import { useSiteInfo } from "@/lib/site-settings";
 import { allCategoriesQuery } from "@/lib/products";
 
 const links = [
@@ -85,8 +84,7 @@ export function Navbar() {
   const cartCount = useCartCount();
   const wishlistCount = useWishlistCount();
   const { user, signOut } = useAuth();
-  const { data: siteSettings } = useQuery(siteSettingsQuery());
-  const logoUrl = siteSettings?.logo_url ?? null;
+  const { name: siteName, logoUrl } = useSiteInfo();
   const { data: allCategories } = useQuery(allCategoriesQuery());
   const mainCategories = (allCategories ?? []).filter((c) => !c.parent_id && c.is_visible !== false);
 
@@ -122,9 +120,9 @@ export function Navbar() {
         </Button>
 
         {/* Logo — set from Admin → Settings */}
-        <Link to="/" className="flex flex-1 items-center justify-center" aria-label={SITE.name}>
+        <Link to="/" className="flex flex-1 items-center justify-center" aria-label={siteName}>
           {logoUrl ? (
-            <img src={logoUrl} alt={SITE.name} className="h-10 max-w-[180px] object-contain" />
+            <img src={logoUrl} alt={siteName} className="h-10 max-w-[180px] object-contain" />
           ) : (
             <span className="h-10 w-40 rounded-lg border border-dashed border-border/70" aria-hidden="true" />
           )}
