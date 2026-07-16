@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
-import { emailReady, sendOrderConfirmation } from "../_email.js";
+import { emailReady, sendOrderConfirmation } from "../_email";
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== "POST") {
