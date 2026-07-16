@@ -356,3 +356,21 @@ ALTER TABLE site_settings ADD COLUMN IF NOT EXISTS hours             text;
 
 INSERT INTO site_settings (id) VALUES ('default')
 ON CONFLICT (id) DO NOTHING;
+
+-- ── 10. ORDER NUMBER GENERATOR ───────────────────────────────
+-- Generates unique order numbers in the format VE-YYYYMMDD-XXXX
+-- Called via supabase.rpc("generate_order_number") at checkout.
+CREATE OR REPLACE FUNCTION generate_order_number()
+RETURNS text
+LANGUAGE plpgsql
+AS $
+DECLARE
+  v_num text;
+BEGIN
+  LOOP
+    v_num := 'VE-' || to_char(now(), 'YYYYMMDD') || '-' || lpad((floor(random() * 9000) + 1000)::int::text, 4, '0');
+    EXIT WHEN NOT EXISTS (SELECT 1 FROM orders WHERE order_number = v_num);
+  END LOOP;
+  RETURN v_num;
+END;
+$;
