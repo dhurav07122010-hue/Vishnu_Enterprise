@@ -11,7 +11,7 @@ export const Route = createFileRoute("/policies/replacement")({
         content: `${POLICY.replacementDays}-day replacement guarantee on damaged, defective or wrong helmet visors from Vishnu Enterprises, Delhi. Easy hassle-free process.`,
       },
       { property: "og:title", content: "Replacement Policy | Vishnu Enterprises" },
-      { property: "og:description", content: `${POLICY.replacementDays}-day helmet visor replacement guarantee. Fast, hassle-free process across Delhi NCR.` },
+      { property: "og:description", content: `${POLICY.replacementDays}-day helmet visor replacement guarantee. Fast, hassle-free process across India.` },
       { property: "og:url", content: "https://www.virgovisor.com/policies/replacement" },
     ],
     links: [{ rel: "canonical", href: "https://www.virgovisor.com/policies/replacement" }],

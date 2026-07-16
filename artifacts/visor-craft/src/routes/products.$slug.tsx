@@ -30,7 +30,7 @@ export const Route = createFileRoute("/products/$slug")({
     const title = `${product.name} | Helmet Visor Delhi | Vishnu Enterprises`;
     const description =
       product.short_description ||
-      `Buy ${product.name} from Vishnu Enterprises. Premium motorcycle helmet visor — COD & UPI accepted. Delivered across Delhi NCR.`;
+      `Buy ${product.name} from Vishnu Enterprises. Premium motorcycle helmet visor — COD & UPI accepted. Delivered across India.`;
     const image = product.primary_image_url || "https://www.virgovisor.com/og-logo.jpeg";
     const url = `https://www.virgovisor.com/products/${params.slug}`;
     return {

@@ -87,7 +87,7 @@ export const Route = createFileRoute("/")({
 
 const perks = [
   { icon: BadgeCheck, title: "Premium build", body: "Optical-grade polycarbonate with hard coat." },
-  { icon: Truck, title: "Local delivery", body: "Delivered across Delhi by our own team." },
+  { icon: Truck, title: "All India delivery", body: "Shipped across India — COD and UPI accepted everywhere." },
   { icon: ShieldCheck, title: "4-day replacement", body: "Damaged or wrong item? We swap it fast." },
   { icon: Sparkles, title: "Fits most helmets", body: "Universal fit for popular full-face helmets." },
 ];
@@ -206,7 +206,7 @@ function HomePage() {
             Reviews
           </p>
           <h2 className="mt-2 font-display text-3xl font-bold text-foreground sm:text-4xl">
-            Loved by riders across Delhi NCR
+            Loved by riders across India
           </h2>
         </ScrollReveal>
         <ScrollReveal group className="grid gap-6 md:grid-cols-3">

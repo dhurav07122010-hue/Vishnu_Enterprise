@@ -2,7 +2,7 @@ export const SITE = {
   name: "Vishnu Enterprises",
   tagline: "Premium Helmet Visors, Delivered.",
   description:
-    "Vishnu Enterprises crafts premium helmet visors — mirror, tinted and clear — engineered for Indian riders. Fast local delivery across Delhi.",
+    "Vishnu Enterprises crafts premium helmet visors — mirror, tinted and clear — engineered for Indian riders. Fast delivery across India.",
   email: "varchswagupta011@gmail.com",
   phone: "+91 79826 94772",
   phoneDigits: "917982694772",
