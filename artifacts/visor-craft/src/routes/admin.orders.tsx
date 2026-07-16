@@ -84,9 +84,37 @@ function AdminOrders() {
       toast.error("Failed to save changes");
       return;
     }
+    const updatedOrder = { ...selectedOrder, ...updates };
     setOrders((prev) =>
-      prev.map((o) => (o.id === selectedOrder.id ? { ...o, ...updates } : o))
+      prev.map((o) => (o.id === selectedOrder.id ? updatedOrder : o))
     );
+
+    // Send status update email to customer (fire-and-forget)
+    fetch("/api/email/order-update", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        order_number: updatedOrder.order_number,
+        customer_name: updatedOrder.customer_name,
+        customer_email: updatedOrder.customer_email,
+        customer_phone: updatedOrder.customer_phone,
+        status: updatedOrder.status,
+        payment_method: updatedOrder.payment_method,
+        payment_status: updatedOrder.payment_status,
+        tracking_code: updatedOrder.tracking_code ?? null,
+        shipping_address_line1: updatedOrder.shipping_address_line1,
+        shipping_address_line2: updatedOrder.shipping_address_line2 ?? null,
+        shipping_landmark: updatedOrder.shipping_landmark ?? null,
+        shipping_city: updatedOrder.shipping_city,
+        shipping_state: updatedOrder.shipping_state,
+        shipping_pincode: updatedOrder.shipping_pincode,
+        subtotal_cents: updatedOrder.subtotal_cents,
+        shipping_cents: updatedOrder.shipping_cents,
+        total_cents: updatedOrder.total_cents,
+        items: [], // items not loaded in admin list view; email shows totals only
+      }),
+    }).catch(() => {});
+
     toast.success("Order updated");
     setDialogOpen(false);
   }

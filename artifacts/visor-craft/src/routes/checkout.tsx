@@ -169,6 +169,22 @@ function CheckoutPage() {
       const { error: itemsError } = await supabase.from("order_items").insert(itemsPayload);
       if (itemsError) throw itemsError;
 
+      // Send confirmation email (fire-and-forget — don't block navigation)
+      fetch("/api/email/order-confirmation", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ...orderPayload,
+          order_number: order.order_number,
+          items: itemsPayload.map((i) => ({
+            product_name: i.product_name,
+            quantity: i.quantity,
+            unit_price_cents: i.unit_price_cents,
+            line_total_cents: i.line_total_cents,
+          })),
+        }),
+      }).catch(() => {}); // silent — email failure never blocks the order
+
       cart.clear();
       toast.success("Order placed!");
       navigate({ to: "/orders/$orderNumber", params: { orderNumber: order.order_number } });

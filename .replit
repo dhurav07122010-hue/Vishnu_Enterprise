@@ -24,6 +24,7 @@ timeoutMs = 20000
 [userenv.shared]
 VITE_SUPABASE_PUBLISHABLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRyYnprdXdwcGduc2lqaWxvcWxvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQwMTk2NTYsImV4cCI6MjA5OTU5NTY1Nn0.pMlYmSWd0vKjnkXH3KNqCwt0tZnGHGxQjMvbkqmc2WA"
 VITE_SUPABASE_URL = "https://trbzkuwppgnsijiloqlo.supabase.co"
+GMAIL_USER = "vishnuenterprises.visor@gmail.com"
 
 [nix]
 channel = "stable-25_05"
