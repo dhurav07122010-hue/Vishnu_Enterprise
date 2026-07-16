@@ -7,12 +7,11 @@ Visor Craft Pro (artifacts/visor-craft) uses Supabase directly from the frontend
 (@supabase/supabase-js), not the lib/db Drizzle scaffold (that scaffold is an
 empty placeholder and unused).
 
-The live/correct Supabase project for this app is `trbzkuwppgnsijiloqlo`
-(https://trbzkuwppgnsijiloqlo.supabase.co). An earlier, different project ref
-(shkonjwxqkcdecobtnvj) was tried first based on a stale assumption and turned
-out to be the wrong project — always read the current VITE_SUPABASE_URL env
-var (or ask the user to confirm the project ref) before running migrations or
-trusting schema state.
+The live/correct Supabase project for this app is `jxdktxnogstjxhdbpjrx`
+(https://jxdktxnogstjxhdbpjrx.supabase.co). The previous project (trbzkuwppgnsijiloqlo)
+was deleted by the user on 2026-07-16 and replaced with this new one.
+Always read the current VITE_SUPABASE_URL env var (or ask the user to confirm
+the project ref) before running migrations or trusting schema state.
 
 Schema source of truth is `supabase-setup.sql` at the repo root (base tables +
 `ALTER TABLE ... ADD COLUMN IF NOT EXISTS` migrations for categories.parent_id,
