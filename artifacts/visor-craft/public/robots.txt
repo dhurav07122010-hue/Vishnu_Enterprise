@@ -1,2 +1,10 @@
 User-agent: *
 Allow: /
+Disallow: /admin
+Disallow: /admin-login
+Disallow: /checkout
+Disallow: /cart
+Disallow: /orders
+Disallow: /wishlist
+
+Sitemap: https://www.virgovisor.com/sitemap.xml
