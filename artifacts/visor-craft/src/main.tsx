@@ -1,7 +1,10 @@
 import { createRoot } from "react-dom/client";
 import { RouterProvider } from "@tanstack/react-router";
 import { getRouter } from "./router";
+import { inject } from '@vercel/analytics';
 import "./styles.css";
+
+inject();
 
 const router = getRouter();
 
