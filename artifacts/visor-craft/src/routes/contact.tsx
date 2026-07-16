@@ -13,20 +13,20 @@ import { useSiteInfo } from "@/lib/site-settings";
 export const Route = createFileRoute("/contact")({
   head: () => ({
     meta: [
-      { title: "Contact Us | Helmet Visor Store Delhi | Vishnu Enterprises" },
+      { title: "Contact Us | Helmet Visor Store India | Vishnu Enterprises" },
       {
         name: "description",
         content:
-          "Contact Vishnu Enterprises for helmet visors in Delhi. Call, WhatsApp or visit us in Johripur, North East Delhi. Quick responses, Delhi NCR delivery.",
+          "Contact Vishnu Enterprises for premium helmet visors. Call, WhatsApp or email us. Pan-India delivery available — COD and UPI accepted.",
       },
-      { name: "keywords", content: "Vishnu Enterprises contact, helmet visor shop Delhi, visor store Delhi, contact helmet accessories Delhi" },
-      { property: "og:title", content: "Contact Vishnu Enterprises | Helmet Visors Delhi" },
-      { property: "og:description", content: "Reach our Delhi helmet visor store via WhatsApp, phone, or email." },
+      { name: "keywords", content: "Vishnu Enterprises contact, helmet visor shop India, buy visor online India, contact helmet accessories India" },
+      { property: "og:title", content: "Contact Vishnu Enterprises | Helmet Visors India" },
+      { property: "og:description", content: "Reach Vishnu Enterprises via WhatsApp, phone, or email. Pan-India delivery." },
       { property: "og:url", content: "https://www.virgovisor.com/contact" },
       { property: "og:image", content: "https://www.virgovisor.com/og-logo.jpeg" },
       { name: "twitter:card", content: "summary_large_image" },
-      { name: "twitter:title", content: "Contact Vishnu Enterprises | Helmet Visors Delhi" },
-      { name: "twitter:description", content: "Reach our Delhi helmet visor store via WhatsApp, phone, or email." },
+      { name: "twitter:title", content: "Contact Vishnu Enterprises | Helmet Visors India" },
+      { name: "twitter:description", content: "Reach Vishnu Enterprises via WhatsApp, phone, or email. Pan-India delivery." },
       { name: "twitter:image", content: "https://www.virgovisor.com/og-logo.jpeg" },
     ],
     links: [{ rel: "canonical", href: "https://www.virgovisor.com/contact" }],

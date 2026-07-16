@@ -49,29 +49,29 @@ function useHomeMetaSync() {
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Helmet Visors Online | Premium Helmet Visors in Delhi | Vishnu Enterprises" },
+      { title: "Helmet Visors Online | Premium Helmet Visors India | Vishnu Enterprises" },
       {
         name: "description",
         content:
-          "Buy premium helmet visors online from Vishnu Enterprises. High-quality helmet visors, bike helmet visors, replacement visors, and motorcycle visor accessories with local delivery across Delhi.",
+          "Buy premium helmet visors online from Vishnu Enterprises. High-quality helmet visors, bike helmet visors, replacement visors, and motorcycle visor accessories with pan-India delivery.",
       },
       {
         name: "keywords",
         content:
-          "Helmet Visors, Helmet Visor, Bike Helmet Visor, Motorcycle Visor, Helmet Accessories, Helmet Shield, Helmet Face Shield, Replacement Helmet Visor, Helmet Glass, Helmet Screen, Riding Accessories, Visor Shop Delhi, Helmet Visors Delhi, Vishnu Enterprises",
+          "Helmet Visors, Helmet Visor, Bike Helmet Visor, Motorcycle Visor, Helmet Accessories, Helmet Shield, Helmet Face Shield, Replacement Helmet Visor, Helmet Glass, Helmet Screen, Riding Accessories, Buy Helmet Visor Online India, Helmet Visors India, Vishnu Enterprises",
       },
-      { property: "og:title", content: "Helmet Visors Online | Premium Helmet Visors in Delhi | Vishnu Enterprises" },
+      { property: "og:title", content: "Helmet Visors Online | Premium Helmet Visors India | Vishnu Enterprises" },
       {
         property: "og:description",
         content:
-          "Buy premium helmet visors online from Vishnu Enterprises. Mirror, tinted and clear visors for motorcycles. Fast local delivery across Delhi NCR.",
+          "Buy premium helmet visors online from Vishnu Enterprises. Mirror, tinted and clear visors for motorcycles. Fast pan-India delivery.",
       },
       { property: "og:url", content: "https://www.virgovisor.com/" },
       { property: "og:image", content: "https://www.virgovisor.com/og-logo.jpeg" },
-      { name: "twitter:title", content: "Premium Helmet Visors in Delhi | Vishnu Enterprises" },
+      { name: "twitter:title", content: "Premium Helmet Visors | Pan-India Delivery | Vishnu Enterprises" },
       {
         name: "twitter:description",
-        content: "Mirror, tinted and clear motorcycle visors. Delivered across Delhi NCR.",
+        content: "Mirror, tinted and clear motorcycle visors. Delivered across India.",
       },
     ],
     links: [{ rel: "canonical", href: "https://www.virgovisor.com/" }],
@@ -114,8 +114,8 @@ const homeFaqJsonLd = {
     },
     {
       "@type": "Question",
-      "name": "Do you deliver helmet visors in Delhi?",
-      "acceptedAnswer": { "@type": "Answer", "text": "Yes! We deliver across Delhi, New Delhi, Noida, Gurugram, Faridabad, and Ghaziabad using our own delivery team for fast local delivery." },
+      "name": "Do you deliver helmet visors all over India?",
+      "acceptedAnswer": { "@type": "Answer", "text": "Yes! We deliver across all of India — Delhi, Mumbai, Bengaluru, Chennai, Hyderabad, Kolkata, Pune, Ahmedabad, and every other city and town. COD and UPI accepted everywhere." },
     },
     {
       "@type": "Question",
@@ -225,23 +225,23 @@ function HomePage() {
         </ScrollReveal>
       </section>
 
-      {/* Local SEO — Delhi service area */}
+      {/* Pan-India service area */}
       <section className="bg-subtle-gradient py-16 md:py-24">
         <div className="container-page">
           <ScrollReveal className="mx-auto mb-10 max-w-2xl text-center">
-            <p className="text-xs font-semibold uppercase tracking-[0.25em] text-primary">Serving Delhi NCR</p>
+            <p className="text-xs font-semibold uppercase tracking-[0.25em] text-primary">Serving All India</p>
             <h2 className="mt-2 font-display text-3xl font-bold text-foreground sm:text-4xl">
-              Helmet Visors Delivered Across Delhi NCR
+              Helmet Visors Delivered Across India
             </h2>
             <p className="mt-4 text-muted-foreground">
-              Vishnu Enterprises is Delhi's go-to store for premium motorcycle helmet visors. We deliver helmet visors, bike visors, and riding accessories across Delhi, New Delhi, Noida, Gurugram, Faridabad, and Ghaziabad — fast.
+              Vishnu Enterprises ships premium motorcycle helmet visors, bike visors, and riding accessories to every corner of India — North, South, East, and West. COD and UPI accepted.
             </p>
           </ScrollReveal>
           <ScrollReveal group className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {[
-              { area: "Delhi & New Delhi", desc: "Same-day dispatch for helmet visors and accessories across central and North East Delhi." },
-              { area: "Noida & Greater Noida", desc: "Fast delivery of bike helmet visors and motorcycle accessories to Noida and Greater Noida." },
-              { area: "Gurugram & Faridabad", desc: "Premium helmet shields, mirror and tinted visors shipped to Gurugram and Faridabad." },
+              { area: "North India", desc: "Delhi, Noida, Gurugram, Lucknow, Jaipur, Chandigarh and all major North Indian cities." },
+              { area: "West & Central India", desc: "Mumbai, Pune, Ahmedabad, Bhopal, Nagpur — fast delivery across Western and Central India." },
+              { area: "South & East India", desc: "Bengaluru, Chennai, Hyderabad, Kolkata and all South and East Indian cities covered." },
             ].map(({ area, desc }) => (
               <ScrollRevealItem key={area}>
                 <div className="rounded-2xl border bg-card p-6 shadow-card-soft">
@@ -273,8 +273,8 @@ function HomePage() {
               a: "We stock mirror visors, tinted visors, and clear visors — all made from optical-grade polycarbonate with a hard coating for scratch resistance.",
             },
             {
-              q: "Do you deliver helmet visors in Delhi?",
-              a: "Yes! We deliver across Delhi, New Delhi, Noida, Gurugram, Faridabad, and Ghaziabad. We use our own delivery team for fast local delivery.",
+              q: "Do you deliver helmet visors all over India?",
+              a: "Yes! We deliver across all of India — Delhi, Mumbai, Bengaluru, Chennai, Hyderabad, Kolkata, Pune, Ahmedabad, and every other city and town. COD and UPI accepted everywhere.",
             },
             {
               q: "Can I replace my old helmet visor myself?",

@@ -37,7 +37,7 @@ export const Route = createFileRoute("/products/$slug")({
       meta: [
         { title },
         { name: "description", content: description },
-        { name: "keywords", content: `${product.name}, helmet visor, motorcycle visor, bike helmet visor Delhi, Vishnu Enterprises` },
+        { name: "keywords", content: `${product.name}, helmet visor, motorcycle visor, buy helmet visor online India, bike helmet visor India, Vishnu Enterprises` },
         { property: "og:title", content: title },
         { property: "og:description", content: description },
         { property: "og:type", content: "product" },
@@ -129,10 +129,10 @@ function ProductPage() {
         },
         {
           "@type": "Question",
-          "name": "Do you deliver helmet visors in Delhi?",
+          "name": "Do you deliver helmet visors all over India?",
           "acceptedAnswer": {
             "@type": "Answer",
-            "text": "Yes! Vishnu Enterprises delivers across Delhi, New Delhi, and the NCR region. We offer fast local delivery with COD and UPI payment options.",
+            "text": "Yes! Vishnu Enterprises delivers across all of India — Delhi, Mumbai, Bengaluru, Chennai, Hyderabad, Kolkata, Pune, Ahmedabad and every other city. COD and UPI payment options available.",
           },
         },
       ],

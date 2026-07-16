@@ -17,27 +17,27 @@ export const Route = createFileRoute("/store")({
   }),
   head: () => ({
     meta: [
-      { title: "Buy Helmet Visors Online | Helmet Visor Shop Delhi | Vishnu Enterprises" },
+      { title: "Buy Helmet Visors Online India | Helmet Visor Shop | Vishnu Enterprises" },
       {
         name: "description",
         content:
-          "Shop premium helmet visors online — mirror, tinted and clear bike visors for motorcycle helmets. Delhi-wide delivery, COD and UPI accepted. Vishnu Enterprises.",
+          "Shop premium helmet visors online — mirror, tinted and clear bike visors for motorcycle helmets. Pan-India delivery, COD and UPI accepted. Vishnu Enterprises.",
       },
       {
         name: "keywords",
         content:
-          "buy helmet visor online, helmet visor shop Delhi, motorcycle visor, bike helmet visor, helmet accessories Delhi, helmet shield, replacement visor",
+          "buy helmet visor online India, helmet visor shop online, motorcycle visor India, bike helmet visor, helmet accessories India, helmet shield, replacement visor India",
       },
-      { property: "og:title", content: "Buy Helmet Visors Online | Vishnu Enterprises" },
+      { property: "og:title", content: "Buy Helmet Visors Online India | Vishnu Enterprises" },
       {
         property: "og:description",
-        content: "Mirror, tinted and clear motorcycle visors. Shop online with Delhi delivery — COD and UPI accepted.",
+        content: "Mirror, tinted and clear motorcycle visors. Shop online with pan-India delivery — COD and UPI accepted.",
       },
       { property: "og:url", content: "https://www.virgovisor.com/store" },
       { property: "og:image", content: "https://www.virgovisor.com/og-logo.jpeg" },
       { name: "twitter:card", content: "summary_large_image" },
-      { name: "twitter:title", content: "Buy Helmet Visors Online | Vishnu Enterprises" },
-      { name: "twitter:description", content: "Mirror, tinted and clear motorcycle visors. Delhi delivery, COD & UPI." },
+      { name: "twitter:title", content: "Buy Helmet Visors Online India | Vishnu Enterprises" },
+      { name: "twitter:description", content: "Mirror, tinted and clear motorcycle visors. Pan-India delivery, COD & UPI." },
       { name: "twitter:image", content: "https://www.virgovisor.com/og-logo.jpeg" },
     ],
     links: [{ rel: "canonical", href: "https://www.virgovisor.com/store" }],
