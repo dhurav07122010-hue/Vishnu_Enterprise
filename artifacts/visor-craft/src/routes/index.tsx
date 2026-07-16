@@ -47,6 +47,35 @@ function useHomeMetaSync() {
 }
 
 export const Route = createFileRoute("/")({
+  head: () => ({
+    meta: [
+      { title: "Helmet Visors Online | Premium Helmet Visors in Delhi | Vishnu Enterprises" },
+      {
+        name: "description",
+        content:
+          "Buy premium helmet visors online from Vishnu Enterprises. High-quality helmet visors, bike helmet visors, replacement visors, and motorcycle visor accessories with local delivery across Delhi.",
+      },
+      {
+        name: "keywords",
+        content:
+          "Helmet Visors, Helmet Visor, Bike Helmet Visor, Motorcycle Visor, Helmet Accessories, Helmet Shield, Helmet Face Shield, Replacement Helmet Visor, Helmet Glass, Helmet Screen, Riding Accessories, Visor Shop Delhi, Helmet Visors Delhi, Vishnu Enterprises",
+      },
+      { property: "og:title", content: "Helmet Visors Online | Premium Helmet Visors in Delhi | Vishnu Enterprises" },
+      {
+        property: "og:description",
+        content:
+          "Buy premium helmet visors online from Vishnu Enterprises. Mirror, tinted and clear visors for motorcycles. Fast local delivery across Delhi NCR.",
+      },
+      { property: "og:url", content: "https://www.virgovisor.com/" },
+      { property: "og:image", content: "https://www.virgovisor.com/og-logo.jpeg" },
+      { name: "twitter:title", content: "Premium Helmet Visors in Delhi | Vishnu Enterprises" },
+      {
+        name: "twitter:description",
+        content: "Mirror, tinted and clear motorcycle visors. Delivered across Delhi NCR.",
+      },
+    ],
+    links: [{ rel: "canonical", href: "https://www.virgovisor.com/" }],
+  }),
   loader: async ({ context }) => {
     await Promise.all([
       context.queryClient.ensureQueryData(productsQuery()),
@@ -69,6 +98,43 @@ const testimonials = [
   { name: "Manish D.", city: "Gurugram", body: "Best clear visor I've owned — zero fogging in winter mornings." },
 ];
 
+const homeFaqJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "Are your helmet visors compatible with most motorcycle helmets?",
+      "acceptedAnswer": { "@type": "Answer", "text": "Yes. Our visors are designed for a universal fit and are compatible with most popular full-face motorcycle helmets in India, including Vega, Steelbird, LS2, and more." },
+    },
+    {
+      "@type": "Question",
+      "name": "What types of helmet visors do you sell?",
+      "acceptedAnswer": { "@type": "Answer", "text": "We stock mirror visors, tinted visors, and clear visors — all made from optical-grade polycarbonate with a hard coating for scratch resistance." },
+    },
+    {
+      "@type": "Question",
+      "name": "Do you deliver helmet visors in Delhi?",
+      "acceptedAnswer": { "@type": "Answer", "text": "Yes! We deliver across Delhi, New Delhi, Noida, Gurugram, Faridabad, and Ghaziabad using our own delivery team for fast local delivery." },
+    },
+    {
+      "@type": "Question",
+      "name": "Can I replace my old helmet visor myself?",
+      "acceptedAnswer": { "@type": "Answer", "text": "Absolutely. Our visors are designed for easy DIY replacement — most can be swapped in under 5 minutes without any special tools." },
+    },
+    {
+      "@type": "Question",
+      "name": "What payment methods do you accept?",
+      "acceptedAnswer": { "@type": "Answer", "text": "We accept Cash on Delivery (COD) and UPI payments for all orders." },
+    },
+    {
+      "@type": "Question",
+      "name": "What is your replacement policy?",
+      "acceptedAnswer": { "@type": "Answer", "text": "We offer a 4-day replacement guarantee on damaged, defective, or wrong items. Reach out within 4 days of delivery and we'll arrange a swap." },
+    },
+  ],
+};
+
 function HomePage() {
   const { data: products } = useSuspenseQuery(productsQuery());
   const { data: slides } = useSuspenseQuery(slidesQuery());
@@ -78,6 +144,7 @@ function HomePage() {
 
   return (
     <>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(homeFaqJsonLd) }} />
       {/* Hero — dynamic slider (falls back to static hero when no slides configured) */}
       <HeroSlider slides={slides} />
 
@@ -153,6 +220,83 @@ function HomePage() {
                   <span className="text-muted-foreground"> · {t.city}</span>
                 </figcaption>
               </figure>
+            </ScrollRevealItem>
+          ))}
+        </ScrollReveal>
+      </section>
+
+      {/* Local SEO — Delhi service area */}
+      <section className="bg-subtle-gradient py-16 md:py-24">
+        <div className="container-page">
+          <ScrollReveal className="mx-auto mb-10 max-w-2xl text-center">
+            <p className="text-xs font-semibold uppercase tracking-[0.25em] text-primary">Serving Delhi NCR</p>
+            <h2 className="mt-2 font-display text-3xl font-bold text-foreground sm:text-4xl">
+              Helmet Visors Delivered Across Delhi NCR
+            </h2>
+            <p className="mt-4 text-muted-foreground">
+              Vishnu Enterprises is Delhi's go-to store for premium motorcycle helmet visors. We deliver helmet visors, bike visors, and riding accessories across Delhi, New Delhi, Noida, Gurugram, Faridabad, and Ghaziabad — fast.
+            </p>
+          </ScrollReveal>
+          <ScrollReveal group className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {[
+              { area: "Delhi & New Delhi", desc: "Same-day dispatch for helmet visors and accessories across central and North East Delhi." },
+              { area: "Noida & Greater Noida", desc: "Fast delivery of bike helmet visors and motorcycle accessories to Noida and Greater Noida." },
+              { area: "Gurugram & Faridabad", desc: "Premium helmet shields, mirror and tinted visors shipped to Gurugram and Faridabad." },
+            ].map(({ area, desc }) => (
+              <ScrollRevealItem key={area}>
+                <div className="rounded-2xl border bg-card p-6 shadow-card-soft">
+                  <h3 className="font-display text-lg font-semibold text-foreground">{area}</h3>
+                  <p className="mt-2 text-sm text-muted-foreground">{desc}</p>
+                </div>
+              </ScrollRevealItem>
+            ))}
+          </ScrollReveal>
+        </div>
+      </section>
+
+      {/* FAQ */}
+      <section className="container-page py-16 md:py-24">
+        <ScrollReveal className="mx-auto mb-10 max-w-2xl text-center">
+          <p className="text-xs font-semibold uppercase tracking-[0.25em] text-primary">FAQ</p>
+          <h2 className="mt-2 font-display text-3xl font-bold text-foreground sm:text-4xl">
+            Frequently Asked Questions
+          </h2>
+        </ScrollReveal>
+        <ScrollReveal group className="mx-auto max-w-3xl divide-y divide-border">
+          {[
+            {
+              q: "Are your helmet visors compatible with most motorcycle helmets?",
+              a: "Yes. Our visors are designed for a universal fit and are compatible with most popular full-face motorcycle helmets available in India, including brands like Vega, Steelbird, LS2, and more.",
+            },
+            {
+              q: "What types of helmet visors do you sell?",
+              a: "We stock mirror visors, tinted visors, and clear visors — all made from optical-grade polycarbonate with a hard coating for scratch resistance.",
+            },
+            {
+              q: "Do you deliver helmet visors in Delhi?",
+              a: "Yes! We deliver across Delhi, New Delhi, Noida, Gurugram, Faridabad, and Ghaziabad. We use our own delivery team for fast local delivery.",
+            },
+            {
+              q: "Can I replace my old helmet visor myself?",
+              a: "Absolutely. Our visors are designed for easy DIY replacement — most can be swapped in under 5 minutes without any special tools.",
+            },
+            {
+              q: "What payment methods do you accept?",
+              a: "We accept Cash on Delivery (COD) and UPI payments for all orders.",
+            },
+            {
+              q: "What is your replacement policy?",
+              a: "We offer a 4-day replacement guarantee on damaged, defective, or wrong items. Simply reach out within 4 days of delivery and we'll arrange a swap.",
+            },
+          ].map(({ q, a }) => (
+            <ScrollRevealItem key={q}>
+              <details className="group py-5">
+                <summary className="flex cursor-pointer items-center justify-between gap-4 font-semibold text-foreground list-none">
+                  <span>{q}</span>
+                  <span className="ml-4 shrink-0 text-primary transition-transform group-open:rotate-45">+</span>
+                </summary>
+                <p className="mt-3 text-sm leading-relaxed text-muted-foreground">{a}</p>
+              </details>
             </ScrollRevealItem>
           ))}
         </ScrollReveal>

@@ -4,9 +4,17 @@ import { Button } from "@/components/ui/button";
 export const Route = createFileRoute("/policies/refund")({
   head: () => ({
     meta: [
-      { title: "Refund Policy — Vishnu Enterprises" },
-      { name: "description", content: "Refund policy for orders placed with Vishnu Enterprises." },
+      { title: "Refund Policy | Vishnu Enterprises — Helmet Visors Delhi" },
+      {
+        name: "description",
+        content:
+          "Read the refund policy for Vishnu Enterprises helmet visor orders. Understand our no-refund policy and when replacements apply.",
+      },
+      { property: "og:title", content: "Refund Policy | Vishnu Enterprises" },
+      { property: "og:description", content: "Refund policy for helmet visor orders placed with Vishnu Enterprises, Delhi." },
+      { property: "og:url", content: "https://www.virgovisor.com/policies/refund" },
     ],
+    links: [{ rel: "canonical", href: "https://www.virgovisor.com/policies/refund" }],
   }),
   component: RefundPolicy,
 });

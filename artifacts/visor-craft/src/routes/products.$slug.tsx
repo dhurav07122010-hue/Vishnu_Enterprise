@@ -27,17 +27,28 @@ export const Route = createFileRoute("/products/$slug")({
       return { meta: [{ title: "Product not found — Vishnu Enterprises" }, { name: "robots", content: "noindex" }] };
     }
     const product = loaderData.product;
-    const title = `${product.name} — Vishnu Enterprises`;
-    const description = product.short_description || `Buy ${product.name} from Vishnu Enterprises. COD & UPI accepted.`;
+    const title = `${product.name} | Helmet Visor Delhi | Vishnu Enterprises`;
+    const description =
+      product.short_description ||
+      `Buy ${product.name} from Vishnu Enterprises. Premium motorcycle helmet visor — COD & UPI accepted. Delivered across Delhi NCR.`;
+    const image = product.primary_image_url || "https://www.virgovisor.com/og-logo.jpeg";
+    const url = `https://www.virgovisor.com/products/${params.slug}`;
     return {
       meta: [
         { title },
         { name: "description", content: description },
+        { name: "keywords", content: `${product.name}, helmet visor, motorcycle visor, bike helmet visor Delhi, Vishnu Enterprises` },
         { property: "og:title", content: title },
         { property: "og:description", content: description },
         { property: "og:type", content: "product" },
+        { property: "og:url", content: url },
+        { property: "og:image", content: image },
+        { name: "twitter:card", content: "summary_large_image" },
+        { name: "twitter:title", content: title },
+        { name: "twitter:description", content: description },
+        { name: "twitter:image", content: image },
       ],
-      links: [],
+      links: [{ rel: "canonical", href: url }],
     };
   },
   component: ProductPage,
@@ -60,30 +71,73 @@ function ProductPage() {
   const isWishlisted = useIsInWishlist(product.id);
   const site = useSiteInfo();
 
-  const jsonLd = {
-    "@context": "https://schema.org",
-    "@type": "Product",
-    "name": product.name,
-    "description": product.short_description || product.description,
-    "image": [resolveProductImage(product.primary_image_url)],
-    "brand": {
-      "@type": "Organization",
-      "name": site.name
+  const productUrl = `https://www.virgovisor.com/products/${product.slug}`;
+
+  const jsonLd = [
+    {
+      "@context": "https://schema.org",
+      "@type": "Product",
+      "name": product.name,
+      "description": product.short_description || product.description,
+      "image": [resolveProductImage(product.primary_image_url)],
+      "brand": { "@type": "Organization", "name": site.name },
+      "offers": {
+        "@type": "Offer",
+        "url": productUrl,
+        "priceCurrency": "INR",
+        "price": product.price_cents / 100,
+        "availability": product.stock > 0 ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
+        "seller": { "@type": "Organization", "name": "Vishnu Enterprises" },
+        "priceValidUntil": new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
+      },
+      ...(product.rating_count > 0 && {
+        "aggregateRating": {
+          "@type": "AggregateRating",
+          "ratingValue": product.rating,
+          "reviewCount": product.rating_count,
+        },
+      }),
     },
-    "offers": {
-      "@type": "Offer",
-      "url": `https://example.com/products/${product.slug}`,
-      "priceCurrency": "INR",
-      "price": product.price_cents / 100,
-      "availability": product.stock > 0 ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
-      "priceValidUntil": new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+    {
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://www.virgovisor.com/" },
+        { "@type": "ListItem", "position": 2, "name": "Shop", "item": "https://www.virgovisor.com/store" },
+        { "@type": "ListItem", "position": 3, "name": product.name, "item": productUrl },
+      ],
     },
-    "aggregateRating": {
-      "@type": "AggregateRating",
-      "ratingValue": product.rating,
-      "reviewCount": product.rating_count
-    }
-  };
+    {
+      "@context": "https://schema.org",
+      "@type": "FAQPage",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": `Is ${product.name} compatible with most motorcycle helmets?`,
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": `Yes, ${product.name} is designed for a universal fit and is compatible with most popular full-face motorcycle helmets available in India.`,
+          },
+        },
+        {
+          "@type": "Question",
+          "name": "Can I replace my old helmet visor easily?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Yes, our helmet visors are designed for easy DIY replacement. Most visors can be swapped in under 5 minutes without any tools.",
+          },
+        },
+        {
+          "@type": "Question",
+          "name": "Do you deliver helmet visors in Delhi?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Yes! Vishnu Enterprises delivers across Delhi, New Delhi, and the NCR region. We offer fast local delivery with COD and UPI payment options.",
+          },
+        },
+      ],
+    },
+  ];
 
   const [qty, setQty] = useState(1);
   const image = resolveProductImage(product.primary_image_url);
@@ -92,10 +146,13 @@ function ProductPage() {
 
   return (
     <>
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-      />
+      {jsonLd.map((schema, i) => (
+        <script
+          key={i}
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
+        />
+      ))}
       <div className="container-page py-8 md:py-12">
         <Link to="/store" className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-primary">
           <ArrowLeft className="h-4 w-4" /> Back to store
