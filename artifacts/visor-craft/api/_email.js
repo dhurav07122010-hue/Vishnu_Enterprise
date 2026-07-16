@@ -1,17 +1,17 @@
-import nodemailer from "nodemailer";
+const nodemailer = require("nodemailer");
 
 const GMAIL_USER = process.env["GMAIL_USER"];
 const GMAIL_APP_PASSWORD = process.env["GMAIL_APP_PASSWORD"];
 const OWNER_EMAIL = process.env["GMAIL_USER"];
 
-export const emailReady = !!(GMAIL_USER && GMAIL_APP_PASSWORD);
+const emailReady = !!(GMAIL_USER && GMAIL_APP_PASSWORD);
 
-export const transporter = nodemailer.createTransport({
+const transporter = nodemailer.createTransport({
   service: "gmail",
   auth: { user: GMAIL_USER, pass: GMAIL_APP_PASSWORD },
 });
 
-export function formatPrice(paise: number) {
+function formatPrice(paise) {
   return new Intl.NumberFormat("en-IN", {
     style: "currency",
     currency: "INR",
@@ -19,7 +19,7 @@ export function formatPrice(paise: number) {
   }).format(paise / 100);
 }
 
-const STATUS_LABEL: Record<string, string> = {
+const STATUS_LABEL = {
   pending: "Pending",
   processing: "Processing",
   shipped: "Shipped",
@@ -27,42 +27,14 @@ const STATUS_LABEL: Record<string, string> = {
   cancelled: "Cancelled",
 };
 
-const PAYMENT_STATUS_LABEL: Record<string, string> = {
+const PAYMENT_STATUS_LABEL = {
   pending: "Pending",
   paid: "Paid",
   failed: "Failed",
   refunded: "Refunded",
 };
 
-export interface OrderItem {
-  product_name: string;
-  quantity: number;
-  unit_price_cents: number;
-  line_total_cents: number;
-}
-
-export interface OrderEmailData {
-  order_number: string;
-  customer_name: string;
-  customer_email: string;
-  customer_phone: string;
-  status: string;
-  payment_method: string;
-  payment_status: string;
-  tracking_code?: string | null;
-  shipping_address_line1: string;
-  shipping_address_line2?: string | null;
-  shipping_landmark?: string | null;
-  shipping_city: string;
-  shipping_state: string;
-  shipping_pincode: string;
-  subtotal_cents: number;
-  shipping_cents: number;
-  total_cents: number;
-  items: OrderItem[];
-}
-
-function baseLayout(title: string, body: string) {
+function baseLayout(title, body) {
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -111,8 +83,8 @@ function baseLayout(title: string, body: string) {
 </html>`;
 }
 
-function itemsTable(items: OrderItem[]) {
-  if (!items.length) return "";
+function itemsTable(items) {
+  if (!items || !items.length) return "";
   const rows = items
     .map(
       (i) => `<tr>
@@ -132,7 +104,7 @@ function itemsTable(items: OrderItem[]) {
 </table>`;
 }
 
-function buildCustomerConfirmationHtml(order: OrderEmailData) {
+function buildCustomerConfirmationHtml(order) {
   const address = [
     order.shipping_address_line1,
     order.shipping_address_line2,
@@ -144,9 +116,7 @@ function buildCustomerConfirmationHtml(order: OrderEmailData) {
 
   const body = `
     <p style="font-size:16px;margin-top:0">Hi <strong>${order.customer_name}</strong> 👋</p>
-    <p style="color:#555;font-size:14px;margin-top:0">
-      Thank you for your order! We've received it and will start processing it shortly.
-    </p>
+    <p style="color:#555;font-size:14px;margin-top:0">Thank you for your order! We've received it and will start processing it shortly.</p>
     <div class="section-title">Order Summary</div>
     <div class="info-row"><span>Order number</span><span><strong>${order.order_number}</strong></span></div>
     <div class="info-row"><span>Order status</span><span><span class="badge badge-${order.status}">${STATUS_LABEL[order.status] ?? order.status}</span></span></div>
@@ -161,37 +131,29 @@ function buildCustomerConfirmationHtml(order: OrderEmailData) {
     <div class="section-title">Shipping To</div>
     <p style="font-size:14px;color:#444;margin:0">${address}</p>
     <p style="font-size:13px;color:#666;margin:6px 0 0">Phone: ${order.customer_phone}</p>
-    <p style="margin-top:24px;font-size:13px;color:#777">
-      Questions? WhatsApp us at <a href="https://wa.me/917982694772">+91 79826 94772</a> or reply to this email.
-    </p>`;
+    <p style="margin-top:24px;font-size:13px;color:#777">Questions? WhatsApp us at <a href="https://wa.me/917982694772">+91 79826 94772</a> or reply to this email.</p>`;
   return baseLayout(`Order Confirmed — ${order.order_number}`, body);
 }
 
-function buildCustomerUpdateHtml(order: OrderEmailData) {
+function buildCustomerUpdateHtml(order) {
   const trackingSection = order.tracking_code
     ? `<div class="info-row"><span>Tracking code</span><span><strong>${order.tracking_code}</strong></span></div>`
     : "";
   const body = `
     <p style="font-size:16px;margin-top:0">Hi <strong>${order.customer_name}</strong> 👋</p>
-    <p style="color:#555;font-size:14px;margin-top:0">
-      Your order <strong>${order.order_number}</strong> has been updated.
-    </p>
+    <p style="color:#555;font-size:14px;margin-top:0">Your order <strong>${order.order_number}</strong> has been updated.</p>
     <div class="section-title">Updated Status</div>
     <div class="info-row"><span>Order status</span><span><span class="badge badge-${order.status}">${STATUS_LABEL[order.status] ?? order.status}</span></span></div>
     <div class="info-row"><span>Payment status</span><span><span class="badge badge-${order.payment_status}">${PAYMENT_STATUS_LABEL[order.payment_status] ?? order.payment_status}</span></span></div>
     ${trackingSection}
     <div class="section-title">Items</div>
     ${itemsTable(order.items)}
-    <div class="totals">
-      <div class="grand">Total: ${formatPrice(order.total_cents)}</div>
-    </div>
-    <p style="margin-top:24px;font-size:13px;color:#777">
-      Need help? WhatsApp us at <a href="https://wa.me/917982694772">+91 79826 94772</a>.
-    </p>`;
+    <div class="totals"><div class="grand">Total: ${formatPrice(order.total_cents)}</div></div>
+    <p style="margin-top:24px;font-size:13px;color:#777">Need help? WhatsApp us at <a href="https://wa.me/917982694772">+91 79826 94772</a>.</p>`;
   return baseLayout(`Order Update — ${order.order_number}`, body);
 }
 
-function buildOwnerNotificationHtml(order: OrderEmailData, type: "new" | "update") {
+function buildOwnerNotificationHtml(order, type) {
   const address = [
     order.shipping_address_line1,
     order.shipping_address_line2,
@@ -225,7 +187,7 @@ function buildOwnerNotificationHtml(order: OrderEmailData, type: "new" | "update
   return baseLayout(`${heading} — ${order.order_number}`, body);
 }
 
-export async function sendOrderConfirmation(order: OrderEmailData) {
+async function sendOrderConfirmation(order) {
   await Promise.all([
     transporter.sendMail({
       from: `"Vishnu Enterprises" <${GMAIL_USER}>`,
@@ -242,7 +204,7 @@ export async function sendOrderConfirmation(order: OrderEmailData) {
   ]);
 }
 
-export async function sendOrderStatusUpdate(order: OrderEmailData) {
+async function sendOrderStatusUpdate(order) {
   await Promise.all([
     transporter.sendMail({
       from: `"Vishnu Enterprises" <${GMAIL_USER}>`,
@@ -258,3 +220,5 @@ export async function sendOrderStatusUpdate(order: OrderEmailData) {
     }),
   ]);
 }
+
+module.exports = { emailReady, sendOrderConfirmation, sendOrderStatusUpdate };

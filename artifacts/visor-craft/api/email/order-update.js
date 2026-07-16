@@ -1,7 +1,6 @@
-import type { VercelRequest, VercelResponse } from "@vercel/node";
-import { emailReady, sendOrderConfirmation } from "../_email";
+const { emailReady, sendOrderStatusUpdate } = require("../_email");
 
-export default async function handler(req: VercelRequest, res: VercelResponse) {
+module.exports = async function handler(req, res) {
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Method not allowed" });
   }
@@ -17,10 +16,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
-    await sendOrderConfirmation(order);
+    await sendOrderStatusUpdate(order);
     return res.status(200).json({ ok: true });
   } catch (err) {
-    console.error("Failed to send order confirmation email:", err);
+    console.error("Failed to send order update email:", err);
     return res.status(500).json({ error: "Failed to send email" });
   }
-}
+};
