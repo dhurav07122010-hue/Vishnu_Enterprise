@@ -33,6 +33,7 @@ function AdminOrders() {
   const [editTrackingCode, setEditTrackingCode] = useState("");
   const [editNotes, setEditNotes] = useState("");
   const [saving, setSaving] = useState(false);
+  const [orderItems, setOrderItems] = useState<any[]>([]);
 
   useEffect(() => {
     if (!ready) return;
@@ -48,13 +49,19 @@ function AdminOrders() {
     return () => { mounted = false; };
   }, [ready, statusFilter]);
 
-  // Sync controlled fields whenever the selected order changes
+  // Sync controlled fields and fetch items whenever the selected order changes
   useEffect(() => {
     if (selectedOrder) {
       setEditStatus(selectedOrder.status ?? "pending");
       setEditPaymentStatus(selectedOrder.payment_status ?? "pending");
       setEditTrackingCode(selectedOrder.tracking_code ?? "");
       setEditNotes(selectedOrder.notes ?? "");
+      setOrderItems([]);
+      supabase
+        .from("order_items")
+        .select("product_name, quantity, unit_price_cents, line_total_cents")
+        .eq("order_id", selectedOrder.id)
+        .then(({ data }) => setOrderItems(data ?? []));
     }
   }, [selectedOrder]);
 
@@ -111,7 +118,12 @@ function AdminOrders() {
         subtotal_cents: updatedOrder.subtotal_cents,
         shipping_cents: updatedOrder.shipping_cents,
         total_cents: updatedOrder.total_cents,
-        items: [], // items not loaded in admin list view; email shows totals only
+        items: orderItems.map((i) => ({
+          product_name: i.product_name,
+          quantity: i.quantity,
+          unit_price_cents: i.unit_price_cents,
+          line_total_cents: i.line_total_cents,
+        })),
       }),
     }).catch(() => {});
 
