@@ -1,12 +1,12 @@
-const nodemailer = require("nodemailer");
+import nodemailer from "nodemailer";
 
 const GMAIL_USER = process.env["GMAIL_USER"];
 const GMAIL_APP_PASSWORD = process.env["GMAIL_APP_PASSWORD"];
 const OWNER_EMAIL = process.env["GMAIL_USER"];
 
-const emailReady = !!(GMAIL_USER && GMAIL_APP_PASSWORD);
+export const emailReady = !!(GMAIL_USER && GMAIL_APP_PASSWORD);
 
-const transporter = nodemailer.createTransport({
+export const transporter = nodemailer.createTransport({
   service: "gmail",
   auth: { user: GMAIL_USER, pass: GMAIL_APP_PASSWORD },
 });
@@ -106,12 +106,9 @@ function itemsTable(items) {
 
 function buildCustomerConfirmationHtml(order) {
   const address = [
-    order.shipping_address_line1,
-    order.shipping_address_line2,
-    order.shipping_landmark,
-    order.shipping_city,
-    order.shipping_state,
-    order.shipping_pincode,
+    order.shipping_address_line1, order.shipping_address_line2,
+    order.shipping_landmark, order.shipping_city,
+    order.shipping_state, order.shipping_pincode,
   ].filter(Boolean).join(", ");
 
   const body = `
@@ -155,12 +152,9 @@ function buildCustomerUpdateHtml(order) {
 
 function buildOwnerNotificationHtml(order, type) {
   const address = [
-    order.shipping_address_line1,
-    order.shipping_address_line2,
-    order.shipping_landmark,
-    order.shipping_city,
-    order.shipping_state,
-    order.shipping_pincode,
+    order.shipping_address_line1, order.shipping_address_line2,
+    order.shipping_landmark, order.shipping_city,
+    order.shipping_state, order.shipping_pincode,
   ].filter(Boolean).join(", ");
 
   const heading = type === "new" ? "🆕 New Order Received!" : "✏️ Order Updated";
@@ -187,7 +181,7 @@ function buildOwnerNotificationHtml(order, type) {
   return baseLayout(`${heading} — ${order.order_number}`, body);
 }
 
-async function sendOrderConfirmation(order) {
+export async function sendOrderConfirmation(order) {
   await Promise.all([
     transporter.sendMail({
       from: `"Vishnu Enterprises" <${GMAIL_USER}>`,
@@ -204,7 +198,7 @@ async function sendOrderConfirmation(order) {
   ]);
 }
 
-async function sendOrderStatusUpdate(order) {
+export async function sendOrderStatusUpdate(order) {
   await Promise.all([
     transporter.sendMail({
       from: `"Vishnu Enterprises" <${GMAIL_USER}>`,
@@ -220,5 +214,3 @@ async function sendOrderStatusUpdate(order) {
     }),
   ]);
 }
-
-module.exports = { emailReady, sendOrderConfirmation, sendOrderStatusUpdate };
