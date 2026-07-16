@@ -76,6 +76,7 @@
   "dependencies": {
     "@supabase/supabase-js": "^2.110.2",
     "@tanstack/react-router": "^1.170.17",
-    "@tanstack/router-plugin": "^1.168.19"
+    "@tanstack/router-plugin": "^1.168.19",
+    "@vercel/analytics": "^2.0.1"
   }
 }
