@@ -237,11 +237,12 @@ function HomePage() {
               Vishnu Enterprises ships premium motorcycle helmet visors, bike visors, and riding accessories to every corner of India — North, South, East, and West. COD and UPI accepted.
             </p>
           </ScrollReveal>
-          <ScrollReveal group className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <ScrollReveal group className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {[
               { area: "North India", desc: "Delhi, Noida, Gurugram, Lucknow, Jaipur, Chandigarh and all major North Indian cities." },
               { area: "West & Central India", desc: "Mumbai, Pune, Ahmedabad, Bhopal, Nagpur — fast delivery across Western and Central India." },
-              { area: "South & East India", desc: "Bengaluru, Chennai, Hyderabad, Kolkata and all South and East Indian cities covered." },
+              { area: "South India", desc: "Bengaluru, Chennai, Hyderabad, Kochi, Coimbatore and all major South Indian cities covered." },
+              { area: "East & Northeast India", desc: "Kolkata, Bhubaneswar, Patna, Guwahati and all Eastern and Northeastern cities covered." },
             ].map(({ area, desc }) => (
               <ScrollRevealItem key={area}>
                 <div className="rounded-2xl border bg-card p-6 shadow-card-soft">
